@@ -28,7 +28,9 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	stub := &stubChat{
 		resp: openai.ChatCompletionResponse{
 			Choices: []openai.ChatCompletionChoice{{
-				Message: openai.ChatCompletionMessage{Content: "{\"commands\":[\"ls\",\"ls -l\"]}"},
+				Message: openai.ChatCompletionMessage{
+					Content: "{\"commands\":[{\"command\":\"ls\"},{\"command\":\"ls -l\"}]}",
+				},
 			}},
 		},
 	}
@@ -54,5 +56,25 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	if stub.req.ResponseFormat == nil ||
 		stub.req.ResponseFormat.Type != openai.ChatCompletionResponseFormatTypeJSONObject {
 		t.Errorf("expected json response format")
+	}
+}
+
+func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
+	stub := &stubChat{
+		resp: openai.ChatCompletionResponse{
+			Choices: []openai.ChatCompletionChoice{{
+				Message: openai.ChatCompletionMessage{Content: "{\"commands\":[\"ls\",\"ls -l\"]}"},
+			}},
+		},
+	}
+	client := &OpenAIClient{api: stub}
+	env := probe.EnvInfo{OS: "linux"}
+
+	got, err := client.GenerateCommands(context.Background(), "list", env)
+	if err != nil {
+		t.Fatalf("GenerateCommands() error = %v", err)
+	}
+	if len(got) != 2 || got[0] != "ls" || got[1] != "ls -l" {
+		t.Errorf("unexpected output: %#v", got)
 	}
 }

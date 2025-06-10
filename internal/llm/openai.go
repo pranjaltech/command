@@ -59,17 +59,37 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no choices returned")
 	}
-	var data struct {
-		Commands []string `json:"commands"`
+	var raw struct {
+		Commands []json.RawMessage `json:"commands"`
 	}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &data); err != nil {
+	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &raw); err != nil {
 		return nil, fmt.Errorf("unmarshal: %w", err)
 	}
-	if len(data.Commands) == 0 {
+
+	var out []string
+	for _, r := range raw.Commands {
+		var s string
+		if err := json.Unmarshal(r, &s); err == nil {
+			out = append(out, s)
+			continue
+		}
+		var obj map[string]interface{}
+		if err := json.Unmarshal(r, &obj); err == nil {
+			if v, ok := obj["command"].(string); ok {
+				out = append(out, v)
+				continue
+			}
+			if v, ok := obj["cmd"].(string); ok {
+				out = append(out, v)
+				continue
+			}
+		}
+	}
+	if len(out) == 0 {
 		return nil, fmt.Errorf("no commands parsed")
 	}
-	if len(data.Commands) > 3 {
-		data.Commands = data.Commands[:3]
+	if len(out) > 3 {
+		out = out[:3]
 	}
-	return data.Commands, nil
+	return out, nil
 }
