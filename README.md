@@ -4,7 +4,7 @@
 
 ## Installation
 
-Use the provided script to build and install the binary to `/usr/local/bin` (override `PREFIX` to change the target directory):
+Use the provided script to build and install the binary to `/usr/local/bin` (override `PREFIX` to change the target directory). If the directory is not writable, run the script with `sudo` or set `PREFIX` to a path you own:
 
 ```bash
 scripts/install.sh
