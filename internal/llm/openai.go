@@ -39,12 +39,15 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	req := openai.ChatCompletionRequest{
 		Model:       openai.GPT4oMini,
 		Temperature: 0.2,
+		ResponseFormat: &openai.ChatCompletionResponseFormat{
+			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
+		},
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role: openai.ChatMessageRoleSystem,
 				Content: "You are a CLI assistant. Environment: " + string(
 					envJSON,
-				) + ". Respond with up to three shell commands, one per line, and no other text.",
+				) + ". Respond with JSON: {\"commands\": [<cmd>...]} limited to three items.",
 			},
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
@@ -56,27 +59,17 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no choices returned")
 	}
-	lines := strings.Split(resp.Choices[0].Message.Content, "\n")
-	out := make([]string, 0, len(lines))
-	for _, ln := range lines {
-		ln = strings.TrimSpace(ln)
-		if ln == "" {
-			continue
-		}
-		// Strip simple list prefixes like "1." or "-" to get the raw command.
-		if i := strings.IndexAny(ln, ". "); i > 0 {
-			prefix := ln[:i]
-			if _, err := fmt.Sscanf(prefix, "%d", new(int)); err == nil {
-				ln = strings.TrimSpace(ln[i+1:])
-			}
-		}
-		out = append(out, ln)
+	var data struct {
+		Commands []string `json:"commands"`
 	}
-	if len(out) > 3 {
-		out = out[:3]
+	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &data); err != nil {
+		return nil, fmt.Errorf("unmarshal: %w", err)
 	}
-	if len(out) == 0 {
+	if len(data.Commands) == 0 {
 		return nil, fmt.Errorf("no commands parsed")
 	}
-	return out, nil
+	if len(data.Commands) > 3 {
+		data.Commands = data.Commands[:3]
+	}
+	return data.Commands, nil
 }

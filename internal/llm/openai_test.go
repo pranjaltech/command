@@ -28,7 +28,7 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	stub := &stubChat{
 		resp: openai.ChatCompletionResponse{
 			Choices: []openai.ChatCompletionChoice{{
-				Message: openai.ChatCompletionMessage{Content: "ls\nls -l"},
+				Message: openai.ChatCompletionMessage{Content: "{\"commands\":[\"ls\",\"ls -l\"]}"},
 			}},
 		},
 	}
@@ -48,7 +48,11 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	if len(stub.req.Messages) == 0 || stub.req.Messages[0].Role != openai.ChatMessageRoleSystem {
 		t.Fatalf("system message missing")
 	}
-	if !strings.Contains(stub.req.Messages[0].Content, "up to three shell commands") {
+	if !strings.Contains(stub.req.Messages[0].Content, "Respond with JSON") {
 		t.Errorf("system prompt missing instruction: %q", stub.req.Messages[0].Content)
+	}
+	if stub.req.ResponseFormat == nil ||
+		stub.req.ResponseFormat.Type != openai.ChatCompletionResponseFormatTypeJSONObject {
+		t.Errorf("expected json response format")
 	}
 }
