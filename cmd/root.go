@@ -10,6 +10,7 @@ import (
 	"command/internal/llm"
 	"command/internal/probe"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +51,10 @@ func Execute() {
 }
 
 func init() {
+	// Load environment variables from .env when present. Ignore errors so
+	// the CLI still works without the file.
+	_ = godotenv.Load()
+
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	rootCmd = NewRootCmd(llm.NewOpenAIClient(apiKey), probe.NewProbe())
 }
