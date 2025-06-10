@@ -26,7 +26,7 @@ func newModel(options []string) model {
 	for i, opt := range options {
 		items[i] = item{title: opt}
 	}
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	l := list.New(items, list.NewDefaultDelegate(), 20, len(options))
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	return model{list: l}
