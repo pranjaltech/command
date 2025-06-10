@@ -33,3 +33,11 @@ func TestRootCmd(t *testing.T) {
 		t.Errorf("want ls got %q", got)
 	}
 }
+
+func TestRootCmd_NoClient(t *testing.T) {
+	cmd := NewRootCmd(nil, stubProbe{})
+	cmd.SetArgs([]string{"noop"})
+	if err := cmd.Execute(); err == nil {
+		t.Fatalf("expected error when api key missing")
+	}
+}

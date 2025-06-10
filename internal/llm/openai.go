@@ -21,9 +21,12 @@ type OpenAIClient struct {
 }
 
 // NewOpenAIClient constructs an OpenAI-based LLM client.
-func NewOpenAIClient(apiKey string) *OpenAIClient {
+func NewOpenAIClient(apiKey string) (*OpenAIClient, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("OPENAI_API_KEY not set")
+	}
 	cfg := openai.DefaultConfig(apiKey)
-	return &OpenAIClient{api: openai.NewClientWithConfig(cfg)}
+	return &OpenAIClient{api: openai.NewClientWithConfig(cfg)}, nil
 }
 
 // GenerateCommand returns a command suggestion from the LLM.

@@ -4,6 +4,8 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -24,6 +26,9 @@ func NewRootCmd(client llm.Client, collector envCollector) *cobra.Command {
 		Use:   "cmd",
 		Short: "Convert natural language into shell commands",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if client == nil {
+				return errors.New("OPENAI_API_KEY not set")
+			}
 			phrase := strings.Join(args, " ")
 			env, err := collector.Collect()
 			if err != nil {
@@ -56,5 +61,9 @@ func init() {
 	_ = godotenv.Load()
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
-	rootCmd = NewRootCmd(llm.NewOpenAIClient(apiKey), probe.NewProbe())
+	client, err := llm.NewOpenAIClient(apiKey)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+	}
+	rootCmd = NewRootCmd(client, probe.NewProbe())
 }
