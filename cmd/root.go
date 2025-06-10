@@ -7,21 +7,38 @@ import (
 	"os"
 	"strings"
 
-	"command/internal/core"
+	"command/internal/llm"
+	"command/internal/probe"
 
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "cmd",
-	Short: "Convert natural language into shell commands",
-	Run: func(cmd *cobra.Command, args []string) {
-		c := core.NewConverter()
-		phrase := strings.Join(args, " ")
-		cmd.Println(c.ToCommand(phrase))
-	},
+type envCollector interface {
+	Collect() (probe.EnvInfo, error)
 }
+
+func NewRootCmd(client llm.Client, collector envCollector) *cobra.Command {
+	return &cobra.Command{
+		Use:   "cmd",
+		Short: "Convert natural language into shell commands",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			phrase := strings.Join(args, " ")
+			env, err := collector.Collect()
+			if err != nil {
+				return err
+			}
+			out, err := client.GenerateCommand(cmd.Context(), phrase, env)
+			if err != nil {
+				return err
+			}
+			cmd.Println(out)
+			return nil
+		},
+	}
+}
+
+var rootCmd *cobra.Command
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -33,13 +50,6 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.command.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	rootCmd = NewRootCmd(llm.NewOpenAIClient(apiKey), probe.NewProbe())
 }
