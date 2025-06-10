@@ -7,8 +7,9 @@ GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
 
 echo "Building cmd for $GOOS/$GOARCH..."
-go build -o cmd
-install -m 755 cmd "$BIN_DIR/cmd"
-rm cmd
+tmp=$(mktemp -t cmd.XXXXXX)
+go build -o "$tmp" ./
+install -m 755 "$tmp" "$BIN_DIR/cmd"
+rm "$tmp"
 
 echo "Installed cmd to $BIN_DIR/cmd"
