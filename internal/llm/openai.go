@@ -41,8 +41,10 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		Temperature: 0.2,
 		Messages: []openai.ChatCompletionMessage{
 			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: "You are a CLI assistant. Environment: " + string(envJSON),
+				Role: openai.ChatMessageRoleSystem,
+				Content: "You are a CLI assistant. Environment: " + string(
+					envJSON,
+				) + ". Respond with up to three shell commands, one per line, and no other text.",
 			},
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
@@ -61,7 +63,17 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		if ln == "" {
 			continue
 		}
+		// Strip simple list prefixes like "1." or "-" to get the raw command.
+		if i := strings.IndexAny(ln, ". "); i > 0 {
+			prefix := ln[:i]
+			if _, err := fmt.Sscanf(prefix, "%d", new(int)); err == nil {
+				ln = strings.TrimSpace(ln[i+1:])
+			}
+		}
 		out = append(out, ln)
+	}
+	if len(out) > 3 {
+		out = out[:3]
 	}
 	if len(out) == 0 {
 		return nil, fmt.Errorf("no commands parsed")

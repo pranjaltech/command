@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	openai "github.com/sashabaranov/go-openai"
@@ -46,5 +47,8 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	}
 	if len(stub.req.Messages) == 0 || stub.req.Messages[0].Role != openai.ChatMessageRoleSystem {
 		t.Fatalf("system message missing")
+	}
+	if !strings.Contains(stub.req.Messages[0].Content, "up to three shell commands") {
+		t.Errorf("system prompt missing instruction: %q", stub.req.Messages[0].Content)
 	}
 }
