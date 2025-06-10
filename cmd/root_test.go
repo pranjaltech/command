@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"command/internal/llm"
@@ -46,7 +47,7 @@ func TestRootCmd(t *testing.T) {
 func TestRootCmd_NoClient(t *testing.T) {
 	cmd := NewRootCmd(nil, stubProbe{}, stubSelector{pick: ""}, &stubRunner{})
 	cmd.SetArgs([]string{"noop"})
-	if err := cmd.Execute(); err == nil {
-		t.Fatalf("expected error when api key missing")
+	if err := cmd.Execute(); err == nil || !strings.Contains(err.Error(), "api key not configured") {
+		t.Fatalf("expected error when api key missing, got %v", err)
 	}
 }

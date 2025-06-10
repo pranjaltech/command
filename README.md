@@ -18,8 +18,9 @@ scripts/uninstall.sh
 
 ## Usage
 
-1. Set your `OPENAI_API_KEY` environment variable or place it in a `.env` file.
-2. Run the tool with a prompt:
+1. Run `cmd <prompt>` and enter your OpenAI API key when prompted. It is stored
+   encrypted under `$HOME/.config/cmd/config.yaml` for future use.
+2. Subsequent runs reuse the saved key automatically.
 
 ```bash
 cmd list all directories

@@ -4,12 +4,14 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"command/internal/config"
 	"command/internal/llm"
 	"command/internal/probe"
 	"command/internal/shell"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -35,7 +38,7 @@ func NewRootCmd(client llm.Client, collector envCollector, sel selector, run run
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if client == nil {
-				return errors.New("OPENAI_API_KEY not set")
+				return errors.New("api key not configured")
 			}
 			phrase := strings.Join(args, " ")
 			env, err := collector.Collect()
@@ -72,6 +75,25 @@ func init() {
 	_ = godotenv.Load()
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+	}
+	if apiKey == "" {
+		apiKey = cfg.APIKey
+	}
+	if apiKey == "" {
+		if term.IsTerminal(int(os.Stdin.Fd())) {
+			fmt.Fprint(os.Stderr, "Enter OpenAI API key: ")
+			reader := bufio.NewReader(os.Stdin)
+			key, _ := reader.ReadString('\n')
+			apiKey = strings.TrimSpace(key)
+			cfg.APIKey = apiKey
+			if err := config.Save(cfg); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+			}
+		}
+	}
 	client, err := llm.NewOpenAIClient(apiKey)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
