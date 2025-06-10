@@ -30,8 +30,9 @@ type runner interface {
 
 func NewRootCmd(client llm.Client, collector envCollector, sel selector, run runner) *cobra.Command {
 	return &cobra.Command{
-		Use:   "cmd",
-		Short: "Convert natural language into shell commands",
+		Use:          "cmd",
+		Short:        "Convert natural language into shell commands",
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if client == nil {
 				return errors.New("OPENAI_API_KEY not set")

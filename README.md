@@ -1,4 +1,43 @@
-# command
-Generate terminal commands from plain-text using LLMs
+# cmd
 
-Place credentials like `OPENAI_API_KEY` in a `.env` file for local development.
+`cmd` converts natural language instructions into shell commands using OpenAI. It collects details about your environment to craft accurate suggestions and lets you choose the command to execute.
+
+## Installation
+
+Use the provided script to build and install the binary to `/usr/local/bin` (override `PREFIX` to change the target directory):
+
+```bash
+scripts/install.sh
+```
+
+To uninstall:
+
+```bash
+scripts/uninstall.sh
+```
+
+## Usage
+
+1. Set your `OPENAI_API_KEY` environment variable or place it in a `.env` file.
+2. Run the tool with a prompt:
+
+```bash
+cmd list all directories
+```
+
+A list of up to three commands is shown. Use the arrow keys to pick one and press `Enter` to run it. The first command is selected by default.
+
+## Development
+
+This project requires Go 1.22+. After cloning, install helper tools with `.codex/setup.sh` and run the verification suite:
+
+```bash
+./.codex/setup.sh
+golangci-lint run ./...
+staticcheck ./...
+golines -m 120 -w $(git ls-files '*.go')
+go vet ./...
+go test -race -coverprofile=coverage.out ./...
+```
+
+Project goals, phases and architecture decisions are documented in [`PROJECT.md`](PROJECT.md). Task progress can be found in the `tasks/` directory.

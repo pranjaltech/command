@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -54,6 +55,10 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	}
 	resp, err := c.api.CreateChatCompletion(ctx, req)
 	if err != nil {
+		var apiErr *openai.APIError
+		if errors.As(err, &apiErr) {
+			return nil, fmt.Errorf("openai request failed: %s (status %d)", apiErr.Message, apiErr.HTTPStatusCode)
+		}
 		return nil, fmt.Errorf("chat completion: %w", err)
 	}
 	if len(resp.Choices) == 0 {

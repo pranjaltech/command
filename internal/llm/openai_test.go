@@ -78,3 +78,14 @@ func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
 		t.Errorf("unexpected output: %#v", got)
 	}
 }
+
+func TestOpenAIClient_GenerateCommands_APIError(t *testing.T) {
+	apiErr := &openai.APIError{HTTPStatusCode: 400, Message: "bad"}
+	stub := &stubChat{err: apiErr}
+	client := &OpenAIClient{api: stub}
+	env := probe.EnvInfo{OS: "linux"}
+	_, err := client.GenerateCommands(context.Background(), "", env)
+	if err == nil || !strings.Contains(err.Error(), "openai request failed") {
+		t.Fatalf("expected wrapped API error, got %v", err)
+	}
+}
