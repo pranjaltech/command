@@ -16,6 +16,7 @@ func TestEndToEnd_Run(t *testing.T) {
 
 	cmd := exec.Command("go", "run", "./main.go", "list all directories")
 	cmd.Env = append(os.Environ(), "OPENAI_API_KEY="+apiKey)
+	cmd.Stdin = strings.NewReader("\n")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("running cmd: %v\n%s", err, out)

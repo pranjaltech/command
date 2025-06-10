@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 
@@ -30,10 +31,10 @@ func NewOpenAIClient(apiKey string) (*OpenAIClient, error) {
 }
 
 // GenerateCommand returns a command suggestion from the LLM.
-func (c *OpenAIClient) GenerateCommand(ctx context.Context, prompt string, env probe.EnvInfo) (string, error) {
+func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env probe.EnvInfo) ([]string, error) {
 	envJSON, err := json.Marshal(env)
 	if err != nil {
-		return "", fmt.Errorf("marshal env: %w", err)
+		return nil, fmt.Errorf("marshal env: %w", err)
 	}
 	req := openai.ChatCompletionRequest{
 		Model:       openai.GPT4oMini,
@@ -48,10 +49,22 @@ func (c *OpenAIClient) GenerateCommand(ctx context.Context, prompt string, env p
 	}
 	resp, err := c.api.CreateChatCompletion(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("chat completion: %w", err)
+		return nil, fmt.Errorf("chat completion: %w", err)
 	}
 	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no choices returned")
+		return nil, fmt.Errorf("no choices returned")
 	}
-	return resp.Choices[0].Message.Content, nil
+	lines := strings.Split(resp.Choices[0].Message.Content, "\n")
+	out := make([]string, 0, len(lines))
+	for _, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if ln == "" {
+			continue
+		}
+		out = append(out, ln)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("no commands parsed")
+	}
+	return out, nil
 }

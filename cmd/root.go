@@ -4,6 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,17 +12,23 @@ import (
 
 	"command/internal/llm"
 	"command/internal/probe"
+	"command/internal/shell"
+	"command/internal/ui"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
-type envCollector interface {
-	Collect() (probe.EnvInfo, error)
+type envCollector interface{ Collect() (probe.EnvInfo, error) }
+type selector interface {
+	Select([]string) (string, error)
+}
+type runner interface {
+	Run(ctx context.Context, cmd string) error
 }
 
-func NewRootCmd(client llm.Client, collector envCollector) *cobra.Command {
+func NewRootCmd(client llm.Client, collector envCollector, sel selector, run runner) *cobra.Command {
 	return &cobra.Command{
 		Use:   "cmd",
 		Short: "Convert natural language into shell commands",
@@ -34,12 +41,15 @@ func NewRootCmd(client llm.Client, collector envCollector) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := client.GenerateCommand(cmd.Context(), phrase, env)
+			cmds, err := client.GenerateCommands(cmd.Context(), phrase, env)
 			if err != nil {
 				return err
 			}
-			cmd.Println(out)
-			return nil
+			choice, err := sel.Select(cmds)
+			if err != nil {
+				return err
+			}
+			return run.Run(cmd.Context(), choice)
 		},
 	}
 }
@@ -65,5 +75,5 @@ func init() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
 	}
-	rootCmd = NewRootCmd(client, probe.NewProbe())
+	rootCmd = NewRootCmd(client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
 }

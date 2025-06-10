@@ -23,23 +23,23 @@ func (s *stubChat) CreateChatCompletion(
 	return s.resp, s.err
 }
 
-func TestOpenAIClient_GenerateCommand(t *testing.T) {
+func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	stub := &stubChat{
 		resp: openai.ChatCompletionResponse{
 			Choices: []openai.ChatCompletionChoice{{
-				Message: openai.ChatCompletionMessage{Content: "ls"},
+				Message: openai.ChatCompletionMessage{Content: "ls\nls -l"},
 			}},
 		},
 	}
 	client := &OpenAIClient{api: stub}
 	env := probe.EnvInfo{OS: "linux"}
 
-	got, err := client.GenerateCommand(context.Background(), "list", env)
+	got, err := client.GenerateCommands(context.Background(), "list", env)
 	if err != nil {
-		t.Fatalf("GenerateCommand() error = %v", err)
+		t.Fatalf("GenerateCommands() error = %v", err)
 	}
-	if got != "ls" {
-		t.Errorf("want ls, got %q", got)
+	if len(got) != 2 || got[0] != "ls" || got[1] != "ls -l" {
+		t.Errorf("unexpected output: %#v", got)
 	}
 	if stub.req.Model != openai.GPT4oMini {
 		t.Errorf("expected model %s", openai.GPT4oMini)

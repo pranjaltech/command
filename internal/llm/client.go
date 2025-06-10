@@ -8,5 +8,5 @@ import (
 
 // Client generates command suggestions given a prompt and environment.
 type Client interface {
-	GenerateCommand(ctx context.Context, prompt string, env probe.EnvInfo) (string, error)
+	GenerateCommands(ctx context.Context, prompt string, env probe.EnvInfo) ([]string, error)
 }
