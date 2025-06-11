@@ -7,11 +7,15 @@
 ### Homebrew
 
 If you use [Homebrew](https://brew.sh) you can install the latest development
-version directly from this repository using a remote formula:
+version directly from this repository using a remote formula. **Make sure to
+use the raw file URL**; installing from the GitHub web interface URL will fail:
 
 ```bash
 brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/cmd.rb
 ```
+
+Replace `main` with another branch name if you want to install a development
+build from that branch.
 
 To uninstall:
 
