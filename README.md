@@ -4,13 +4,32 @@
 
 ## Installation
 
-Use the provided script to build and install the binary to `/usr/local/bin` (override `PREFIX` to change the target directory). If the directory is not writable, run the script with `sudo` or set `PREFIX` to a path you own:
+### Homebrew
+
+If you use [Homebrew](https://brew.sh) you can install the latest development
+version directly from this repository:
+
+```bash
+brew install https://github.com/myusername/reponame
+```
+
+To uninstall:
+
+```bash
+brew uninstall cmd
+```
+
+### Manual build
+
+Use the provided script to build and install the binary to `/usr/local/bin`
+(override `PREFIX` to change the target directory). If the directory is not
+writable, run the script with `sudo` or set `PREFIX` to a path you own:
 
 ```bash
 scripts/install.sh
 ```
 
-To uninstall:
+To uninstall the manually installed binary:
 
 ```bash
 scripts/uninstall.sh

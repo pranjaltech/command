@@ -10,6 +10,6 @@ Implementation Checklist:
 - [x] Log system prompt and user prompt separately in OpenAI client when debug is enabled.
 - [x] Hide list title in selector model.
 - [x] Update debug output unit test.
-- [ ] Run verification commands.
+- [x] Run verification commands.
 
-Status: In Progress
+Status: Completed
