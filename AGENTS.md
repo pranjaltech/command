@@ -109,7 +109,7 @@ flowchart TD\
 -----
 ## <a name="x0701ab4f8caa69a491757eb1c163f0258f59701"></a>10. Continuous Verification Checklist (Codex must run before PR)
 ./codex/setup.sh         *# ensure fresh env similar to agent*\
-cobra-cli lint\
+golangci-lint run ./...\
 staticcheck ./...\
 golines -m 120 ./...\
 go vet ./...\
@@ -127,7 +127,7 @@ go test -race -coverprofile=coverage.out ./...
 \- [ ] E2E\
 \### Verification\
 \```bash\
-$ cobra-cli lint && staticcheck ./... && go test -race ./...
+$ golangci-lint run ./... && staticcheck ./... && go test -race ./...
 ### <a name="checklist"></a>Checklist
 
 \---\
