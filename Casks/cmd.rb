@@ -1,4 +1,4 @@
-cask "cmd-dev" do
+cask "cmd" do
   arch arm: "arm64", intel: "amd64"
 
   version :latest

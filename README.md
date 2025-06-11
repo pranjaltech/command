@@ -25,13 +25,13 @@ raw file URL (replace `main` with another branch name if needed):
 
 ```bash
 brew install --cask \
-  https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd-dev.rb
+  https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd.rb
 ```
 
 To uninstall either version:
 
 ```bash
-brew uninstall --cask cmd cmd-dev
+brew uninstall --cask cmd
 ```
 
 ### Manual build
