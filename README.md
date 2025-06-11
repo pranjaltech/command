@@ -8,13 +8,13 @@
 
 #### Stable release
 
-Tap the tools repository and install the prebuilt binary:
+Tap the tools repository and install the prebuilt binary as a Homebrew cask:
 
 ```bash
-brew install pranjaltech/tools/cmd
+brew install --cask pranjaltech/tools/cmd
 ```
 
-This formula lives in the
+This cask lives in the
 [pranjaltech/homebrew-tools](https://github.com/pranjaltech/homebrew-tools) tap
 and is generated on each tagged release.
 
@@ -30,7 +30,7 @@ brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/
 To uninstall either version:
 
 ```bash
-brew uninstall cmd
+brew uninstall --cask cmd
 ```
 
 ### Manual build

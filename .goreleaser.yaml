@@ -43,7 +43,7 @@ changelog:
       - "^docs:"
       - "^test:"
 
-brews:
+homebrew_casks:
   - name: cmd
     repository:
       owner: pranjaltech
@@ -51,10 +51,6 @@ brews:
     commit_author:
       name: GitHub Actions
       email: actions@github.com
-    directory: Formula
+    directory: Casks
     skip_upload: true
-    install: |
-      bin.install "cmd"
-    test: |
-      output = shell_output("#{bin}/cmd 2>&1", 1)
-      assert_match "A prompt is required", output
+    binary: cmd
