@@ -59,9 +59,13 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				fmt.Fprintf(os.Stderr, "env: %s\n", data)
 			}
 			attempts := 0
-		again:
-			cmds, err := (*client).GenerateCommands(cmd.Context(), phrase, env)
-			if err != nil {
+			var cmds []string
+			for {
+				var err error
+				cmds, err = (*client).GenerateCommands(cmd.Context(), phrase, env)
+				if err == nil {
+					break
+				}
 				var nc llm.NeedClarificationError
 				if errors.As(err, &nc) && attempts < 2 {
 					fmt.Fprintln(os.Stderr, nc.Question)
@@ -70,7 +74,7 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 					extra, _ := reader.ReadString('\n')
 					phrase += "\n" + strings.TrimSpace(extra)
 					attempts++
-					goto again
+					continue
 				}
 				return err
 			}
