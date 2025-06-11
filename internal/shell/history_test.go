@@ -60,3 +60,27 @@ func TestAppendHistory_Fish(t *testing.T) {
 		t.Errorf("unexpected fish history: %q", string(data))
 	}
 }
+
+func TestAppendHistory_Fish_Custom(t *testing.T) {
+	dir := t.TempDir()
+	os.Setenv("HOME", dir)
+	os.Setenv("XDG_DATA_HOME", filepath.Join(dir, "xdg"))
+	os.Setenv("fish_history", "alt")
+	defer func() {
+		os.Unsetenv("HOME")
+		os.Unsetenv("XDG_DATA_HOME")
+		os.Unsetenv("fish_history")
+	}()
+
+	if err := appendHistory("/usr/bin/fish", "ls"); err != nil {
+		t.Fatalf("appendHistory fish custom: %v", err)
+	}
+	path := filepath.Join(dir, "xdg", "fish", "alt_history")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !strings.Contains(string(data), "ls") {
+		t.Errorf("unexpected fish history: %q", string(data))
+	}
+}

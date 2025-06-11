@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -44,17 +45,33 @@ func appendZshHistory(cmd string) error {
 }
 
 func appendFishHistory(cmd string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(home, ".local/share/fish")
+	file := fishHistoryPath()
+	dir := filepath.Dir(file)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
-	file := filepath.Join(dir, "fish_history")
 	line := fmt.Sprintf("- cmd: %s\n  when: %d\n", cmd, time.Now().Unix())
 	return appendLine(file, line)
+}
+
+func fishHistoryPath() string {
+	if f := os.Getenv("fish_history"); f != "" {
+		if strings.HasSuffix(f, "_history") {
+			return f
+		}
+		return filepath.Join(dataHome(), "fish", f+"_history")
+	}
+	return filepath.Join(dataHome(), "fish", "fish_history")
+}
+
+func dataHome() string {
+	if xdg := os.Getenv("XDG_DATA_HOME"); xdg != "" {
+		return xdg
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".local", "share")
+	}
+	return "/tmp"
 }
 
 func appendLine(path, line string) error {
