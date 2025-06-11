@@ -6,18 +6,28 @@
 
 ### Homebrew
 
-If you use [Homebrew](https://brew.sh) you can install the latest development
-version directly from this repository using a remote formula. **Make sure to
-use the raw file URL**; installing from the GitHub web interface URL will fail:
+#### Stable release
+
+Tap the tools repository and install the prebuilt binary:
+
+```bash
+brew install pranjaltech/tools/cmd
+```
+
+This formula lives in the
+[pranjaltech/homebrew-tools](https://github.com/pranjaltech/homebrew-tools) tap
+and is generated on each tagged release.
+
+#### Development version
+
+To try a branch build directly from this repository, install the formula using
+its raw file URL (replace `main` with another branch name if needed):
 
 ```bash
 brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/cmd.rb
 ```
 
-Replace `main` with another branch name if you want to install a development
-build from that branch.
-
-To uninstall:
+To uninstall either version:
 
 ```bash
 brew uninstall cmd
