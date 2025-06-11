@@ -90,3 +90,25 @@ func TestOpenAIClient_GenerateCommands_APIError(t *testing.T) {
 		t.Fatalf("expected wrapped API error, got %v", err)
 	}
 }
+
+func TestOpenAIClient_DebugOutput(t *testing.T) {
+	stub := &stubChat{
+		resp: openai.ChatCompletionResponse{
+			Choices: []openai.ChatCompletionChoice{{
+				Message: openai.ChatCompletionMessage{Content: "{\"commands\":[\"ls\"]}"},
+			}},
+		},
+	}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	var buf strings.Builder
+	client.EnableDebug(&buf)
+	env := probe.EnvInfo{OS: "linux"}
+	_, err := client.GenerateCommands(context.Background(), "list", env)
+	if err != nil {
+		t.Fatalf("GenerateCommands() error = %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "llm prompt: list") || !strings.Contains(out, "llm raw response") {
+		t.Errorf("debug output missing, got: %s", out)
+	}
+}

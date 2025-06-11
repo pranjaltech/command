@@ -6,6 +6,7 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -46,17 +47,30 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				return errors.New("api key not configured")
 			}
 			phrase := strings.Join(args, " ")
+			if debug {
+				fmt.Fprintf(os.Stderr, "prompt: %s\n", phrase)
+			}
 			env, err := collector.Collect()
 			if err != nil {
 				return err
+			}
+			if debug {
+				data, _ := json.MarshalIndent(env, "", "  ")
+				fmt.Fprintf(os.Stderr, "env: %s\n", data)
 			}
 			cmds, err := (*client).GenerateCommands(cmd.Context(), phrase, env)
 			if err != nil {
 				return err
 			}
+			if debug {
+				fmt.Fprintf(os.Stderr, "suggestions: %v\n", cmds)
+			}
 			choice, err := sel.Select(cmds)
 			if err != nil {
 				return err
+			}
+			if debug {
+				fmt.Fprintf(os.Stderr, "selected: %s\n", choice)
 			}
 			return run.Run(cmd.Context(), choice)
 		},
@@ -70,6 +84,7 @@ var (
 	model       string
 	temperature float32
 	client      llm.Client
+	debug       bool
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -102,6 +117,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.PersistentFlags().StringVar(&model, "model", model, "OpenAI model")
 	rootCmd.PersistentFlags().Float32Var(&temperature, "temperature", temperature, "sampling temperature")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose debug output")
 
 	rootCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
 		if apiKey == "" {
@@ -113,10 +129,14 @@ func init() {
 			}
 		}
 		var err error
-		client, err = llm.NewOpenAIClient(apiKey, model, temperature)
+		oa, err := llm.NewOpenAIClient(apiKey, model, temperature)
 		if err != nil {
 			return err
 		}
+		if debug {
+			oa.EnableDebug(os.Stderr)
+		}
+		client = oa
 		cfg.APIKey = apiKey
 		cfg.Model = model
 		cfg.Temperature = temperature
