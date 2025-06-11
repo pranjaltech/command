@@ -429,3 +429,206 @@ Implementation Checklist:
 Status: Completed
 
 ---
+## add_version_flag
+Objective: Provide version information via `cmd --version`.
+
+Acceptance Criteria:
+- `cmd --version` prints the build version.
+- Version is injected during build using ldflags.
+- Unit test verifies `--version` output.
+- Documentation explains how to display the version.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Declare `Version` variable in the `cmd` package.
+- [x] Set `rootCmd.Version` to that variable.
+- [x] Add ldflags in `.goreleaser.yaml` to fill `Version`.
+- [x] Add unit test for `--version` flag.
+- [x] Mention the flag in README.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
+## clarification_flow
+Objective: Handle LLM need_clarification responses by prompting the user and retrying.
+
+Acceptance Criteria:
+- OpenAI client returns a typed error when the response includes a non-empty `need_clarification` string.
+- Root command asks the user the question and sends the extra information to the LLM (up to two times).
+- Unit tests cover parsing of the field and the clarification loop.
+- All verification commands pass.
+
+Implementation Checklist:
+- [x] Add NeedClarificationError type and parse logic in OpenAI client.
+- [x] Update root command to prompt the user and retry when this error occurs.
+- [x] Extend openai_test.go to cover the new error.
+- [x] Add root command unit test simulating clarification flow.
+- [x] Run gofmt, golines, golangci-lint, staticcheck, go vet, go test -race.
+
+Status: Completed
+
+---
+## debug_mode_improvements
+Objective: Improve debug mode output and UI.
+
+Acceptance Criteria:
+- Debug output logs the full system prompt including environment details.
+- UI selector no longer shows the "List" title bar.
+- Unit test updated for new debug logs.
+- All verification commands pass.
+
+Implementation Checklist:
+- [x] Log system prompt and user prompt separately in OpenAI client when debug is enabled.
+- [x] Hide list title in selector model.
+- [x] Update debug output unit test.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
+## homebrew_packaging
+Objective: Add Homebrew formula and installation instructions so users can install via brew.
+
+Acceptance Criteria:
+- Formula file builds the CLI using Go and includes a test block.
+- README documents installation using the raw formula URL.
+- goreleaser config includes a brews section for generating the formula.
+- Verification commands pass.
+
+Implementation Checklist:
+- [x] Add Formula/cmd.rb with go build and test.
+- [x] Configure goreleaser to produce Homebrew formula.
+- [x] Update README with brew install command.
+- [x] Run golangci-lint, staticcheck, go vet, golines, go test -race.
+
+Status: Completed
+
+---
+## homebrew_versioned_release
+Objective: Implement versioned release workflow with Homebrew tap
+
+Acceptance Criteria:
+- goreleaser builds cross-platform binaries and generates a Homebrew formula
+  pointing at release tarballs
+- README explains installing the stable release from the pranjaltech/tools tap
+  and installing development versions from a raw formula URL
+- Tap repository is configurable so generated .rb files can be copied to
+  https://github.com/pranjaltech/homebrew-tools
+- Verification commands pass
+
+Implementation Checklist:
+- [x] Update goreleaser config with project name, release settings and tap info
+- [x] Document stable and development installation methods in README
+- [x] Run golangci-lint, staticcheck, golines, go vet, go test -race
+
+Status: Completed
+
+---
+## llm_prompt_improvement
+Objective: Enhance the LLM prompt with richer context and stricter output rules.
+
+Acceptance Criteria:
+- System prompt follows the example from the repo README with environment section, dynamic context placeholders, output contract, style rules and few-shot examples.
+- OpenAI client uses this prompt template when generating commands.
+- Unit tests updated to validate new prompt pieces.
+- All verification commands pass.
+
+Implementation Checklist:
+- [x] Add system prompt template and helper to build it with environment info.
+- [x] Update OpenAI client to use new template.
+- [x] Extend unit tests in openai_test.go for the new prompt.
+- [x] Run gofmt, golines, golangci-lint, staticcheck, go vet, go test -race.
+
+Status: Completed
+
+---
+## path_scan_cache
+Objective: Cache PATH binary scans to avoid repeated directory reads when building the system prompt.
+
+Acceptance Criteria:
+- uniqueBinaries caches its result so repeated calls don't rescan the PATH.
+- Unit tests and verification commands continue to pass.
+
+Implementation Checklist:
+- [x] Add sync.Once and cached list in openai.go.
+- [x] Update buildSystemPrompt to use cached data.
+- [x] Run verification commands.
+
+Status: Completed
+
+
+---
+## remove_formula_folder
+Objective: Remove obsolete Homebrew Formula directory.
+
+Acceptance Criteria:
+- `Formula/` folder and files are deleted.
+- README has no references to the formula.
+- `goreleaser` config contains only cask settings.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Delete `Formula/cmd.rb`.
+- [x] Ensure README mentions only Homebrew casks.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
+## switch_to_homebrew_cask
+Objective: Replace deprecated brews section with homebrew_casks and update documentation.
+
+Acceptance Criteria:
+- `.goreleaser.yaml` uses `homebrew_casks` configuration.
+- README shows `brew install --cask` instructions for stable and development versions.
+- Development cask file exists under `Casks/`.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Update goreleaser config.
+- [x] Update README with dev cask URL.
+- [x] Add `Casks/cmd-dev.rb`.
+- [x] Run goreleaser check.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
+## unify_dev_cask
+Objective: Use a single Homebrew cask file `cmd.rb` for both stable and development installs.
+
+Acceptance Criteria:
+- `Casks/cmd.rb` exists and contains the cask definition.
+- No `Casks/cmd-dev.rb` file remains.
+- README refers to the raw `cmd.rb` URL for development installation.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Remove `cmd-dev.rb`.
+- [x] Add `cmd.rb` with the same content.
+- [x] Update README installation section.
+- [x] Run `goreleaser check`.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
+## update_goreleaser_config
+Objective: Update goreleaser configuration to version 2 to resolve release errors.
+
+Acceptance Criteria:
+- `goreleaser check` passes without errors.
+- Release workflow works with `goreleaser release --clean`.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Change `.goreleaser.yaml` to start with `version: 2`.
+- [x] Run `goreleaser check` to verify config (initially shows deprecation warnings).
+- [x] Update deprecated fields under `archives` to use `formats` keys.
+- [x] Re-run `goreleaser check` until no warnings remain.
+- [x] Run verification commands.
+
+Status: Completed
+
+---
