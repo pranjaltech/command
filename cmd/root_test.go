@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -17,6 +18,16 @@ func (s stubLLM) GenerateCommands(ctx context.Context, prompt string, env probe.
 }
 
 var _ llm.Client = stubLLM{}
+
+type clarifyLLM struct{ calls int }
+
+func (c *clarifyLLM) GenerateCommands(ctx context.Context, prompt string, env probe.EnvInfo) ([]string, error) {
+	c.calls++
+	if c.calls == 1 {
+		return nil, llm.NeedClarificationError{Question: "which dir?"}
+	}
+	return []string{"ls"}, nil
+}
 
 type stubSelector struct{ pick string }
 
@@ -62,5 +73,31 @@ func TestRootCmd_NoPrompt(t *testing.T) {
 	err := cmd.Execute()
 	if err == nil || !strings.Contains(err.Error(), "at least 1 arg") {
 		t.Fatalf("expected arg error, got %v", err)
+	}
+}
+
+func TestRootCmd_ClarificationFlow(t *testing.T) {
+	r := &stubRunner{}
+	clar := &clarifyLLM{}
+	c := llm.Client(clar)
+	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: "ls"}, r)
+	// provide clarification input
+	rPipe, wPipe, _ := os.Pipe()
+	oldStdin := os.Stdin
+	os.Stdin = rPipe
+	_, _ = wPipe.WriteString("src\n")
+	wPipe.Close()
+	defer func() { os.Stdin = oldStdin }()
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetArgs([]string{"list files"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	if clar.calls != 2 {
+		t.Errorf("expected 2 calls, got %d", clar.calls)
+	}
+	if r.cmd != "ls" {
+		t.Errorf("expected runner to execute ls, got %q", r.cmd)
 	}
 }

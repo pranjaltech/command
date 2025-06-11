@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -51,8 +52,9 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	if len(stub.req.Messages) == 0 || stub.req.Messages[0].Role != openai.ChatMessageRoleSystem {
 		t.Fatalf("system message missing")
 	}
-	if !strings.Contains(stub.req.Messages[0].Content, "Respond with JSON") {
-		t.Errorf("system prompt missing instruction: %q", stub.req.Messages[0].Content)
+	if !strings.Contains(stub.req.Messages[0].Content, "Output contract") ||
+		!strings.Contains(stub.req.Messages[0].Content, "Few-shot examples") {
+		t.Errorf("system prompt missing sections: %q", stub.req.Messages[0].Content)
 	}
 	if stub.req.ResponseFormat == nil ||
 		stub.req.ResponseFormat.Type != openai.ChatCompletionResponseFormatTypeJSONObject {
@@ -111,5 +113,24 @@ func TestOpenAIClient_DebugOutput(t *testing.T) {
 	if !strings.Contains(out, "llm system prompt:") || !strings.Contains(out, "llm user prompt: list") ||
 		!strings.Contains(out, "llm raw response") {
 		t.Errorf("debug output missing, got: %s", out)
+	}
+}
+
+func TestOpenAIClient_NeedClarification(t *testing.T) {
+	stub := &stubChat{
+		resp: openai.ChatCompletionResponse{
+			Choices: []openai.ChatCompletionChoice{{
+				Message: openai.ChatCompletionMessage{
+					Content: "{\"commands\":[],\"need_clarification\":\"which dir?\"}",
+				},
+			}},
+		},
+	}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	env := probe.EnvInfo{OS: "linux"}
+	_, err := client.GenerateCommands(context.Background(), "list", env)
+	var nc NeedClarificationError
+	if !errors.As(err, &nc) || !strings.Contains(nc.Question, "which dir") {
+		t.Fatalf("expected clarification error, got %v", err)
 	}
 }

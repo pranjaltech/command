@@ -58,8 +58,24 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				data, _ := json.MarshalIndent(env, "", "  ")
 				fmt.Fprintf(os.Stderr, "env: %s\n", data)
 			}
-			cmds, err := (*client).GenerateCommands(cmd.Context(), phrase, env)
-			if err != nil {
+			attempts := 0
+			var cmds []string
+			for {
+				var err error
+				cmds, err = (*client).GenerateCommands(cmd.Context(), phrase, env)
+				if err == nil {
+					break
+				}
+				var nc llm.NeedClarificationError
+				if errors.As(err, &nc) && attempts < 2 {
+					fmt.Fprintln(os.Stderr, nc.Question)
+					fmt.Fprint(os.Stderr, "> ")
+					reader := bufio.NewReader(os.Stdin)
+					extra, _ := reader.ReadString('\n')
+					phrase += "\n" + strings.TrimSpace(extra)
+					attempts++
+					continue
+				}
 				return err
 			}
 			if debug {
