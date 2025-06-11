@@ -28,6 +28,17 @@ cmd list all directories
 
 A list of up to three commands is shown. Use the arrow keys to pick one and press `Enter` to run it. The first command is selected by default.
 
+### Configuration
+
+Settings are stored in `$HOME/.config/cmd/config.yaml` (override with `CMD_CONFIG`).
+Fields:
+
+- `api_key` – your OpenAI API token (encrypted)
+- `model` – model name to use (default `gpt-4o-mini`)
+- `temperature` – sampling temperature for the LLM
+
+You can override `model` and `temperature` with `--model` and `--temperature` flags. The values are persisted back to the config file.
+
 ## Development
 
 This project requires Go 1.22+. After cloning, install helper tools with `.codex/setup.sh` and run the verification suite:

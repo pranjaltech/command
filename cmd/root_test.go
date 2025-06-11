@@ -32,7 +32,8 @@ func (stubProbe) Collect() (probe.EnvInfo, error) { return probe.EnvInfo{}, nil 
 
 func TestRootCmd(t *testing.T) {
 	r := &stubRunner{}
-	cmd := NewRootCmd(stubLLM{out: []string{"ls"}}, stubProbe{}, stubSelector{pick: "ls"}, r)
+	c := llm.Client(stubLLM{out: []string{"ls"}})
+	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: "ls"}, r)
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	cmd.SetArgs([]string{"list"})
@@ -45,7 +46,8 @@ func TestRootCmd(t *testing.T) {
 }
 
 func TestRootCmd_NoClient(t *testing.T) {
-	cmd := NewRootCmd(nil, stubProbe{}, stubSelector{pick: ""}, &stubRunner{})
+	var c llm.Client
+	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: ""}, &stubRunner{})
 	cmd.SetArgs([]string{"noop"})
 	if err := cmd.Execute(); err == nil || !strings.Contains(err.Error(), "api key not configured") {
 		t.Fatalf("expected error when api key missing, got %v", err)

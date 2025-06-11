@@ -31,13 +31,17 @@ type runner interface {
 	Run(ctx context.Context, cmd string) error
 }
 
-func NewRootCmd(client llm.Client, collector envCollector, sel selector, run runner) *cobra.Command {
+func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run runner) *cobra.Command {
 	return &cobra.Command{
-		Use:          "cmd",
-		Short:        "Convert natural language into shell commands",
+		Use:   "cmd [flags] <prompt>",
+		Short: "Convert natural language into shell commands",
+		Long: "cmd translates English instructions into shell commands using OpenAI." +
+			" Configuration is read from $HOME/.config/cmd/config.yaml or $CMD_CONFIG." +
+			" Fields:\n  api_key - OpenAI token (encrypted)\n  model - model name" +
+			" (default " + config.DefaultModel + ")\n  temperature - sampling temperature",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if client == nil {
+			if *client == nil {
 				return errors.New("api key not configured")
 			}
 			phrase := strings.Join(args, " ")
@@ -45,7 +49,7 @@ func NewRootCmd(client llm.Client, collector envCollector, sel selector, run run
 			if err != nil {
 				return err
 			}
-			cmds, err := client.GenerateCommands(cmd.Context(), phrase, env)
+			cmds, err := (*client).GenerateCommands(cmd.Context(), phrase, env)
 			if err != nil {
 				return err
 			}
@@ -59,6 +63,13 @@ func NewRootCmd(client llm.Client, collector envCollector, sel selector, run run
 }
 
 var rootCmd *cobra.Command
+var (
+	cfg         *config.Config
+	apiKey      string
+	model       string
+	temperature float32
+	client      llm.Client
+)
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -74,29 +85,39 @@ func init() {
 	// the CLI still works without the file.
 	_ = godotenv.Load()
 
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	cfg, err := config.Load()
+	var err error
+	cfg, err = config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
 	}
+	apiKey = os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		apiKey = cfg.APIKey
 	}
-	if apiKey == "" {
-		if term.IsTerminal(int(os.Stdin.Fd())) {
-			fmt.Fprint(os.Stderr, "Enter OpenAI API key: ")
-			reader := bufio.NewReader(os.Stdin)
-			key, _ := reader.ReadString('\n')
-			apiKey = strings.TrimSpace(key)
-			cfg.APIKey = apiKey
-			if err := config.Save(cfg); err != nil {
-				fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+	model = cfg.Model
+	temperature = cfg.Temperature
+
+	rootCmd = NewRootCmd(&client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
+	rootCmd.PersistentFlags().StringVar(&model, "model", model, "OpenAI model")
+	rootCmd.PersistentFlags().Float32Var(&temperature, "temperature", temperature, "sampling temperature")
+
+	rootCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if apiKey == "" {
+			if term.IsTerminal(int(os.Stdin.Fd())) {
+				fmt.Fprint(os.Stderr, "Enter OpenAI API key: ")
+				reader := bufio.NewReader(os.Stdin)
+				key, _ := reader.ReadString('\n')
+				apiKey = strings.TrimSpace(key)
 			}
 		}
+		var err error
+		client, err = llm.NewOpenAIClient(apiKey, model, temperature)
+		if err != nil {
+			return err
+		}
+		cfg.APIKey = apiKey
+		cfg.Model = model
+		cfg.Temperature = temperature
+		return config.Save(cfg)
 	}
-	client, err := llm.NewOpenAIClient(apiKey)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
-	}
-	rootCmd = NewRootCmd(client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
 }

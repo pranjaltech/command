@@ -7,6 +7,7 @@ import (
 
 	openai "github.com/sashabaranov/go-openai"
 
+	"command/internal/config"
 	"command/internal/probe"
 )
 
@@ -34,7 +35,7 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
 	env := probe.EnvInfo{OS: "linux"}
 
 	got, err := client.GenerateCommands(context.Background(), "list", env)
@@ -44,8 +45,8 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	if len(got) != 2 || got[0] != "ls" || got[1] != "ls -l" {
 		t.Errorf("unexpected output: %#v", got)
 	}
-	if stub.req.Model != openai.GPT4oMini {
-		t.Errorf("expected model %s", openai.GPT4oMini)
+	if stub.req.Model != config.DefaultModel {
+		t.Errorf("expected model %s", config.DefaultModel)
 	}
 	if len(stub.req.Messages) == 0 || stub.req.Messages[0].Role != openai.ChatMessageRoleSystem {
 		t.Fatalf("system message missing")
@@ -67,7 +68,7 @@ func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
 	env := probe.EnvInfo{OS: "linux"}
 
 	got, err := client.GenerateCommands(context.Background(), "list", env)
@@ -82,7 +83,7 @@ func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
 func TestOpenAIClient_GenerateCommands_APIError(t *testing.T) {
 	apiErr := &openai.APIError{HTTPStatusCode: 400, Message: "bad"}
 	stub := &stubChat{err: apiErr}
-	client := &OpenAIClient{api: stub}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
 	env := probe.EnvInfo{OS: "linux"}
 	_, err := client.GenerateCommands(context.Background(), "", env)
 	if err == nil || !strings.Contains(err.Error(), "openai request failed") {

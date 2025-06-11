@@ -15,10 +15,16 @@ import (
 
 // Config holds persistent settings.
 type Config struct {
-	APIKey string `mapstructure:"api_key"`
+	APIKey      string  `mapstructure:"api_key"`
+	Model       string  `mapstructure:"model"`
+	Temperature float32 `mapstructure:"temperature"`
 }
 
-const secret = "01234567890123456789012345678901"
+const (
+	secret             = "01234567890123456789012345678901"
+	DefaultModel       = "gpt-4o-mini"
+	DefaultTemperature = 0.2
+)
 
 func cfgPath() string {
 	if p := os.Getenv("CMD_CONFIG"); p != "" {
@@ -97,6 +103,12 @@ func Load() (*Config, error) {
 		}
 		c.APIKey = dec
 	}
+	if v.GetString("model") == "" {
+		c.Model = DefaultModel
+	}
+	if !v.IsSet("temperature") {
+		c.Temperature = DefaultTemperature
+	}
 	return &c, nil
 }
 
@@ -114,5 +126,7 @@ func Save(c *Config) error {
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
 	v.Set("api_key", enc)
+	v.Set("model", c.Model)
+	v.Set("temperature", c.Temperature)
 	return v.WriteConfigAs(path)
 }

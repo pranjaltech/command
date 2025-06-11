@@ -9,6 +9,7 @@ import (
 
 	openai "github.com/sashabaranov/go-openai"
 
+	"command/internal/config"
 	"command/internal/probe"
 )
 
@@ -19,16 +20,24 @@ type ChatClient interface {
 
 // OpenAIClient implements Client using the official OpenAI SDK.
 type OpenAIClient struct {
-	api ChatClient
+	api         ChatClient
+	model       string
+	temperature float32
 }
 
 // NewOpenAIClient constructs an OpenAI-based LLM client.
-func NewOpenAIClient(apiKey string) (*OpenAIClient, error) {
+func NewOpenAIClient(apiKey, model string, temperature float32) (*OpenAIClient, error) {
 	if apiKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 	cfg := openai.DefaultConfig(apiKey)
-	return &OpenAIClient{api: openai.NewClientWithConfig(cfg)}, nil
+	if model == "" {
+		model = config.DefaultModel
+	}
+	if temperature == 0 {
+		temperature = config.DefaultTemperature
+	}
+	return &OpenAIClient{api: openai.NewClientWithConfig(cfg), model: model, temperature: temperature}, nil
 }
 
 // GenerateCommand returns a command suggestion from the LLM.
@@ -38,8 +47,8 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		return nil, fmt.Errorf("marshal env: %w", err)
 	}
 	req := openai.ChatCompletionRequest{
-		Model:       openai.GPT4oMini,
-		Temperature: 0.2,
+		Model:       c.model,
+		Temperature: c.temperature,
 		ResponseFormat: &openai.ChatCompletionResponseFormat{
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
