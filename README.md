@@ -28,6 +28,7 @@ cmd list all directories
 ```
 
 A list of up to three commands is shown. Use the arrow keys to pick one and press `Enter` to run it. The first command is selected by default.
+The executed command is appended to your shell's history file so it can be recalled later. Some shells, like fish, may not show it in the current session until you start a new one or run `history merge`.
 
 Pass `--debug` to print the full prompt, environment info and LLM response to stderr. This is helpful when troubleshooting.
 

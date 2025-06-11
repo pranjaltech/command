@@ -25,5 +25,8 @@ func (execRunner) Run(ctx context.Context, cmdStr string) error {
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
-	return c.Run()
+	err := c.Run()
+	// Ignore history errors so command execution result is returned.
+	_ = appendHistory(sh, cmdStr)
+	return err
 }
