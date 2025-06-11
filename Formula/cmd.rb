@@ -1,7 +1,7 @@
 class Cmd < Formula
   desc "AI-assisted CLI that turns natural language into shell commands"
-  homepage "https://github.com/myusername/reponame"
-  head "https://github.com/myusername/reponame.git", branch: "main"
+  homepage "https://github.com/pranjaltech/command"
+  head "https://github.com/pranjaltech/command.git", branch: "main"
 
   depends_on "go" => :build
 
