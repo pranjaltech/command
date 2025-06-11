@@ -21,11 +21,19 @@ and is generated on each tagged release.
 #### Development version
 
 To try a branch build directly from this repository, install the cask using its
-raw file URL (replace `main` with another branch name if needed):
+raw file URL. **Homebrew will reject the regular GitHub web URL** – it must be
+the direct `.rb` file. Replace `main` with another branch name if needed:
 
 ```bash
 brew install --cask \
   https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd.rb
+```
+
+For another branch, replace `main` with the branch name. For example:
+
+```bash
+brew install --cask \
+  https://raw.githubusercontent.com/pranjaltech/command/my-feature/Casks/cmd.rb
 ```
 
 To uninstall either version:

@@ -632,3 +632,15 @@ Implementation Checklist:
 Status: Completed
 
 ---
+Objective: Clarify README instructions for installing a branch build via Homebrew.
+
+Acceptance Criteria:
+- README emphasises using the raw file URL when installing from a branch.
+- Example shows replacing `main` with the branch name.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Update README with extra note and example.
+- [x] Run verification commands.
+
+Status: Completed
