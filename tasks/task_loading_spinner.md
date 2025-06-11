@@ -8,6 +8,7 @@ Acceptance Criteria:
 
 Implementation Checklist:
 - [x] Add ui.Loader for spinner.
+- [x] Remove loader message and use "dots" frames from cli-spinners.
 - [x] Create log package with Enable and Debugf helpers.
 - [x] Refactor root and OpenAI client to use log.Debugf.
 - [x] Update tests for colored debug output.

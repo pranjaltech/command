@@ -59,7 +59,7 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 			var cmds []string
 			for {
 				var err error
-				l := ui.NewLoader("Thinking")
+				l := ui.NewLoader()
 				l.Start()
 				cmds, err = (*client).GenerateCommands(cmd.Context(), phrase, env)
 				l.Stop()
