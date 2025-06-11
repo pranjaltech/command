@@ -14,6 +14,7 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 
 	"command/internal/config"
+	"command/internal/log"
 	"command/internal/probe"
 )
 
@@ -71,7 +72,6 @@ type OpenAIClient struct {
 	model       string
 	temperature float32
 	debug       bool
-	out         io.Writer
 }
 
 // NeedClarificationError is returned when the model asks a follow-up question
@@ -142,9 +142,7 @@ func uniqueBinaries(limit int) string {
 // EnableDebug turns on verbose logging to the provided writer.
 func (c *OpenAIClient) EnableDebug(w io.Writer) {
 	c.debug = true
-	if w != nil {
-		c.out = w
-	}
+	log.Enable(w)
 }
 
 // NewOpenAIClient constructs an OpenAI-based LLM client.
@@ -163,7 +161,6 @@ func NewOpenAIClient(apiKey, model string, temperature float32) (*OpenAIClient, 
 		api:         openai.NewClientWithConfig(cfg),
 		model:       model,
 		temperature: temperature,
-		out:         os.Stderr,
 	}, nil
 }
 
@@ -174,10 +171,10 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		return nil, err
 	}
 	if c.debug {
-		fmt.Fprintf(c.out, "llm system prompt: %s\n", sysPrompt)
-		fmt.Fprintf(c.out, "llm user prompt: %s\n", prompt)
+		log.Debugf("llm system prompt: %s", sysPrompt)
+		log.Debugf("llm user prompt: %s", prompt)
 		if data, err := json.MarshalIndent(env, "", "  "); err == nil {
-			fmt.Fprintf(c.out, "llm env: %s\n", data)
+			log.Debugf("llm env: %s", data)
 		}
 	}
 	req := openai.ChatCompletionRequest{
@@ -193,7 +190,7 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	}
 	resp, err := c.api.CreateChatCompletion(ctx, req)
 	if c.debug && err != nil {
-		fmt.Fprintf(c.out, "llm error: %v\n", err)
+		log.Debugf("llm error: %v", err)
 	}
 	if err != nil {
 		var apiErr *openai.APIError
@@ -203,7 +200,7 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		return nil, fmt.Errorf("chat completion: %w", err)
 	}
 	if c.debug {
-		fmt.Fprintf(c.out, "llm raw response: %s\n", strings.TrimSpace(resp.Choices[0].Message.Content))
+		log.Debugf("llm raw response: %s", strings.TrimSpace(resp.Choices[0].Message.Content))
 	}
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no choices returned")
@@ -249,7 +246,7 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		out = out[:3]
 	}
 	if c.debug {
-		fmt.Fprintf(c.out, "llm parsed commands: %v\n", out)
+		log.Debugf("llm parsed commands: %v", out)
 	}
 	return out, nil
 }

@@ -14,6 +14,7 @@ import (
 
 	"command/internal/config"
 	"command/internal/llm"
+	"command/internal/log"
 	"command/internal/probe"
 	"command/internal/shell"
 	"command/internal/ui"
@@ -47,22 +48,21 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				return errors.New("api key not configured")
 			}
 			phrase := strings.Join(args, " ")
-			if debug {
-				fmt.Fprintf(os.Stderr, "prompt: %s\n", phrase)
-			}
+			log.Debugf("prompt: %s", phrase)
 			env, err := collector.Collect()
 			if err != nil {
 				return err
 			}
-			if debug {
-				data, _ := json.MarshalIndent(env, "", "  ")
-				fmt.Fprintf(os.Stderr, "env: %s\n", data)
-			}
+			data, _ := json.MarshalIndent(env, "", "  ")
+			log.Debugf("env: %s", data)
 			attempts := 0
 			var cmds []string
 			for {
 				var err error
+				l := ui.NewLoader("Thinking")
+				l.Start()
 				cmds, err = (*client).GenerateCommands(cmd.Context(), phrase, env)
+				l.Stop()
 				if err == nil {
 					break
 				}
@@ -78,16 +78,12 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				}
 				return err
 			}
-			if debug {
-				fmt.Fprintf(os.Stderr, "suggestions: %v\n", cmds)
-			}
+			log.Debugf("suggestions: %v", cmds)
 			choice, err := sel.Select(cmds)
 			if err != nil {
 				return err
 			}
-			if debug {
-				fmt.Fprintf(os.Stderr, "selected: %s\n", choice)
-			}
+			log.Debugf("selected: %s", choice)
 			return run.Run(cmd.Context(), choice)
 		},
 	}
@@ -145,6 +141,9 @@ func init() {
 			}
 		}
 		var err error
+		if debug {
+			log.Enable(os.Stderr)
+		}
 		oa, err := llm.NewOpenAIClient(apiKey, model, temperature)
 		if err != nil {
 			return err
