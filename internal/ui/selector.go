@@ -43,6 +43,8 @@ func newModel(options []string) model {
 	l := list.New(items, list.NewDefaultDelegate(), width, len(options))
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
+	l.Title = ""
+	l.SetShowTitle(false)
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.CharLimit = 0
