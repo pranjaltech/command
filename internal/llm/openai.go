@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
@@ -14,6 +15,49 @@ import (
 	"command/internal/config"
 	"command/internal/probe"
 )
+
+const promptTemplate = `You are **cmd**, a terminal-command assistant.
+
+## 1. Environment (immutable for this session)
+%s
+
+## 2. Dynamic context (inject when available)
+### Installed binaries (truncated PATH scan)
+%s
+
+### Top-level files in $PWD
+%s
+
+### Git status (if inside a repo)
+%s
+
+### User aliases & functions
+%s
+
+## 3. Output contract  -- obey exactly
+- Respond ONLY with valid JSON—no markdown, no prose.
+- Schema:
+  {
+    "commands": ["<cmd1>", "<cmd2>", "<cmd3>"],   // ≤3, most relevant first
+    "need_clarification": "<question or null>",
+    "notes": "<one-sentence rationale or null>"
+  }
+- Never output destructive commands (e.g. 'rm -rf /') unless the user explicitly requests them and they are clearly marked by adding "dangerous": true alongside that entry.
+- If the request is ambiguous, leave "commands" empty and set "need_clarification".
+
+## 4. Style rules
+- Fish syntax by default.
+- Chain commands with && only when later commands depend on earlier success.
+- Prefer concise flags (ls -la > ls --all --long).
+
+## 5. Few-shot examples
+U: list go files in current dir
+A: {"commands":["ls *.go"],"need_clarification":null,"notes":null}
+
+U: initialise a git repo and push first commit
+A: {"commands":["git init && git add . && git commit -m \"init\" && git branch -M main && git remote add origin <url> && git push -u origin main"],"need_clarification":null,"notes":"uses main branch by default"}
+
+Begin!`
 
 // ChatClient abstracts the OpenAI client for testability.
 type ChatClient interface {
@@ -27,6 +71,51 @@ type OpenAIClient struct {
 	temperature float32
 	debug       bool
 	out         io.Writer
+}
+
+func buildSystemPrompt(env probe.EnvInfo) (string, error) {
+	envJSON, err := json.Marshal(env)
+	if err != nil {
+		return "", fmt.Errorf("marshal env: %w", err)
+	}
+	files, _ := os.ReadDir(env.WorkDir)
+	var names []string
+	for i, f := range files {
+		if i >= 20 {
+			break
+		}
+		names = append(names, f.Name())
+	}
+	fileList := strings.Join(names, " ")
+
+	bins := uniqueBinaries(20)
+
+	gitStatus := fmt.Sprintf("{\"root\":%q,\"branch\":%q,\"dirty\":%t}", env.GitRoot, env.GitBranch, env.GitDirty)
+
+	return fmt.Sprintf(promptTemplate, envJSON, bins, fileList, gitStatus, "[]"), nil
+}
+
+func uniqueBinaries(limit int) string {
+	seen := make(map[string]struct{})
+	var out []string
+	for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if len(out) >= limit {
+				return strings.Join(out, " ")
+			}
+			name := e.Name()
+			if _, ok := seen[name]; ok {
+				continue
+			}
+			seen[name] = struct{}{}
+			out = append(out, name)
+		}
+	}
+	return strings.Join(out, " ")
 }
 
 // EnableDebug turns on verbose logging to the provided writer.
@@ -59,22 +148,16 @@ func NewOpenAIClient(apiKey, model string, temperature float32) (*OpenAIClient, 
 
 // GenerateCommand returns a command suggestion from the LLM.
 func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env probe.EnvInfo) ([]string, error) {
-	envJSON, err := json.Marshal(env)
+	sysPrompt, err := buildSystemPrompt(env)
 	if err != nil {
-		return nil, fmt.Errorf("marshal env: %w", err)
+		return nil, err
 	}
-	sysPrompt := "You are a CLI assistant. Environment:" + string(envJSON) +
-		". Respond with JSON: {\"commands\": [<cmd>...]} limited to three items."
 	if c.debug {
 		fmt.Fprintf(c.out, "llm system prompt: %s\n", sysPrompt)
 		fmt.Fprintf(c.out, "llm user prompt: %s\n", prompt)
-		var pretty []byte
-		if p, err := json.MarshalIndent(env, "", "  "); err == nil {
-			pretty = p
-		} else {
-			pretty = envJSON
+		if data, err := json.MarshalIndent(env, "", "  "); err == nil {
+			fmt.Fprintf(c.out, "llm env: %s\n", data)
 		}
-		fmt.Fprintf(c.out, "llm env: %s\n", pretty)
 	}
 	req := openai.ChatCompletionRequest{
 		Model:       c.model,

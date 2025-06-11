@@ -51,8 +51,9 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 	if len(stub.req.Messages) == 0 || stub.req.Messages[0].Role != openai.ChatMessageRoleSystem {
 		t.Fatalf("system message missing")
 	}
-	if !strings.Contains(stub.req.Messages[0].Content, "Respond with JSON") {
-		t.Errorf("system prompt missing instruction: %q", stub.req.Messages[0].Content)
+	if !strings.Contains(stub.req.Messages[0].Content, "Output contract") ||
+		!strings.Contains(stub.req.Messages[0].Content, "Few-shot examples") {
+		t.Errorf("system prompt missing sections: %q", stub.req.Messages[0].Content)
 	}
 	if stub.req.ResponseFormat == nil ||
 		stub.req.ResponseFormat.Type != openai.ChatCompletionResponseFormatTypeJSONObject {
