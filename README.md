@@ -20,17 +20,18 @@ and is generated on each tagged release.
 
 #### Development version
 
-To try a branch build directly from this repository, install the formula using
-its raw file URL (replace `main` with another branch name if needed):
+To try a branch build directly from this repository, install the cask using its
+raw file URL (replace `main` with another branch name if needed):
 
 ```bash
-brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/cmd.rb
+brew install --cask \
+  https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd-dev.rb
 ```
 
 To uninstall either version:
 
 ```bash
-brew uninstall --cask cmd
+brew uninstall --cask cmd cmd-dev
 ```
 
 ### Manual build
