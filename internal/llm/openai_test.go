@@ -108,7 +108,8 @@ func TestOpenAIClient_DebugOutput(t *testing.T) {
 		t.Fatalf("GenerateCommands() error = %v", err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, "llm prompt: list") || !strings.Contains(out, "llm raw response") {
+	if !strings.Contains(out, "llm system prompt:") || !strings.Contains(out, "llm user prompt: list") ||
+		!strings.Contains(out, "llm raw response") {
 		t.Errorf("debug output missing, got: %s", out)
 	}
 }

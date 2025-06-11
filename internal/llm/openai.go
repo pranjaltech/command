@@ -63,8 +63,11 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 	if err != nil {
 		return nil, fmt.Errorf("marshal env: %w", err)
 	}
+	sysPrompt := "You are a CLI assistant. Environment:" + string(envJSON) +
+		". Respond with JSON: {\"commands\": [<cmd>...]} limited to three items."
 	if c.debug {
-		fmt.Fprintf(c.out, "llm prompt: %s\n", prompt)
+		fmt.Fprintf(c.out, "llm system prompt: %s\n", sysPrompt)
+		fmt.Fprintf(c.out, "llm user prompt: %s\n", prompt)
 		var pretty []byte
 		if p, err := json.MarshalIndent(env, "", "  "); err == nil {
 			pretty = p
@@ -80,12 +83,7 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
 		Messages: []openai.ChatCompletionMessage{
-			{
-				Role: openai.ChatMessageRoleSystem,
-				Content: "You are a CLI assistant. Environment: " + string(
-					envJSON,
-				) + ". Respond with JSON: {\"commands\": [<cmd>...]} limited to three items.",
-			},
+			{Role: openai.ChatMessageRoleSystem, Content: sysPrompt},
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
 	}
