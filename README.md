@@ -28,6 +28,7 @@ cmd list all directories
 ```
 
 A list of up to three commands is shown. Use the arrow keys to pick one and press `Enter` to run it. The first command is selected by default.
+The executed command is appended to your shell's history so it can be recalled later.
 
 Pass `--debug` to print the full prompt, environment info and LLM response to stderr. This is helpful when troubleshooting.
 
