@@ -11,4 +11,10 @@ cask "cmd" do
   homepage "https://github.com/pranjaltech/command"
 
   binary "cmd"
+
+  postflight do
+    if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+      system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/cmd"]
+    end
+  end
 end
