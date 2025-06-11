@@ -158,7 +158,7 @@ Codex and human contributors \*\*must\*\* manage feature or bug work through exp
 \
 1\. \*\*Create a task stub\*\*  \
 `   `\*Location:\* `docs/tasks/` or `tasks/` (create if absent).  \
-`   `\*Filename schema:\* `task\_<incrementing‑number>.md` (e.g. `task\_42.md`).\
+`   `*Filename schema:* `task_<short-description>.md` using lowercase words separated by underscores (e.g. `task_add_login_flag.md`).\
 2\. \*\*Plan before code\*\*  \
 `   `Inside the file list:\
 `   `\* Objective / user story\
@@ -173,10 +173,11 @@ Codex and human contributors \*\*must\*\* manage feature or bug work through exp
 4\. \*\*Update the task file\*\*  \
 `   `Record status (`✅ done` / `🚧 in‑progress`), known bugs, `TODO`, or `FIX\_LATER` items after each green test run.\
 5\. \*\*Reference before next chunk\*\*  \
-`   `Always open the `task\_<n>.md` and confirm remaining work before coding again.\
+`   `Always open the `task_<short-description>.md` and confirm remaining work before coding again.\
 6\. \*\*Close‑out\*\*  \
 `   `When all acceptance criteria are met and CI passes, mark the task file as \*\*Completed\*\* and reference it in the PR description.\
 \
+`   `Move completed tasks into `completed_tasks.md` to keep the directory tidy.
 \> \*Rationale:\* This provides a transparent audit trail for Codex actions, eases context loading, and enforces disciplined TDD.\
 \
 \### Remember\
