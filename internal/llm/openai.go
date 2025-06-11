@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	openai "github.com/sashabaranov/go-openai"
 
@@ -106,27 +107,36 @@ func buildSystemPrompt(env probe.EnvInfo) (string, error) {
 	return fmt.Sprintf(promptTemplate, envJSON, bins, fileList, gitStatus, "[]"), nil
 }
 
+var (
+	binsOnce sync.Once
+	binsList []string
+)
+
 func uniqueBinaries(limit int) string {
-	seen := make(map[string]struct{})
-	var out []string
-	for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
-		entries, err := os.ReadDir(dir)
-		if err != nil {
-			continue
-		}
-		for _, e := range entries {
-			if len(out) >= limit {
-				return strings.Join(out, " ")
-			}
-			name := e.Name()
-			if _, ok := seen[name]; ok {
+	binsOnce.Do(func() {
+		seen := make(map[string]struct{})
+		for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
+			entries, err := os.ReadDir(dir)
+			if err != nil {
 				continue
 			}
-			seen[name] = struct{}{}
-			out = append(out, name)
+			for _, e := range entries {
+				if len(binsList) >= limit {
+					return
+				}
+				name := e.Name()
+				if _, ok := seen[name]; ok {
+					continue
+				}
+				seen[name] = struct{}{}
+				binsList = append(binsList, name)
+			}
 		}
+	})
+	if len(binsList) > limit {
+		return strings.Join(binsList[:limit], " ")
 	}
-	return strings.Join(out, " ")
+	return strings.Join(binsList, " ")
 }
 
 // EnableDebug turns on verbose logging to the provided writer.
