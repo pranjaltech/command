@@ -111,7 +111,7 @@ flowchart TD\
 ./codex/setup.sh         *# ensure fresh env similar to agent*\
 golangci-lint run ./...\
 staticcheck ./...\
-golines -m 120 ./...\
+golines -m 120 -w $(git ls-files '*.go')\
 go vet ./...\
 go test -race -coverprofile=coverage.out ./...
 
