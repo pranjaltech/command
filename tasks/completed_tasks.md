@@ -27,6 +27,23 @@ Environment notes:
 
 Status: Completed
 
+---
+## link_homebrew_tap
+Objective: Link the Homebrew cask release process to the pranjaltech/homebrew-tools tap.
+
+Acceptance Criteria:
+- `.goreleaser.yaml` uses `homebrew_casks` configured for the `pranjaltech/homebrew-tools` tap.
+- Uploads to the tap happen automatically on release.
+- Verification commands succeed.
+
+Implementation Checklist:
+- [x] Add tap and repository details in the goreleaser config.
+- [x] Provide install and test blocks.
+- [x] Add commit message template.
+- [x] Run `goreleaser check` and verification commands.
+
+Status: Completed
+
 
 ---
 

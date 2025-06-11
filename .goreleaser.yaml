@@ -50,9 +50,10 @@ homebrew_casks:
     repository:
       owner: pranjaltech
       name: homebrew-tools
+    description: "AI-assisted CLI that turns natural language into shell commands"
+    homepage: "https://github.com/pranjaltech/command"
     commit_author:
       name: GitHub Actions
       email: actions@github.com
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     directory: Casks
-    skip_upload: true
-    binary: cmd
