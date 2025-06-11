@@ -47,11 +47,11 @@ func appendHistory(shellPath, cmdStr string) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if filepath.Base(shellPath) == "fish" {
-		fmt.Fprintf(f, "- cmd: %s\n  when: %d\n", cmdStr, time.Now().Unix())
+		_, _ = fmt.Fprintf(f, "- cmd: %s\n  when: %d\n", cmdStr, time.Now().Unix())
 	} else {
-		fmt.Fprintln(f, cmdStr)
+		_, _ = fmt.Fprintln(f, cmdStr)
 	}
 }
 

@@ -1,15 +1,13 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestLoadSave(t *testing.T) {
 	dir := t.TempDir()
-	os.Setenv("CMD_CONFIG", filepath.Join(dir, "config.yaml"))
-	defer os.Unsetenv("CMD_CONFIG")
+	t.Setenv("CMD_CONFIG", filepath.Join(dir, "config.yaml"))
 
 	c := &Config{APIKey: "secret", Model: "gpt-4", Temperature: 0.5}
 	if err := Save(c); err != nil {

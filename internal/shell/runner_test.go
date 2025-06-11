@@ -11,8 +11,8 @@ import (
 
 func TestExecRunner_History_Bash(t *testing.T) {
 	tmp := t.TempDir()
-	os.Setenv("HOME", tmp)
-	os.Setenv("SHELL", "/bin/bash")
+	t.Setenv("HOME", tmp)
+	t.Setenv("SHELL", "/bin/bash")
 	old := commandContext
 	defer func() { commandContext = old }()
 	var got []string
@@ -39,8 +39,8 @@ func TestExecRunner_History_Bash(t *testing.T) {
 
 func TestExecRunner_History_Zsh(t *testing.T) {
 	tmp := t.TempDir()
-	os.Setenv("HOME", tmp)
-	os.Setenv("SHELL", "/bin/zsh")
+	t.Setenv("HOME", tmp)
+	t.Setenv("SHELL", "/bin/zsh")
 	old := commandContext
 	defer func() { commandContext = old }()
 	var got []string
@@ -66,8 +66,8 @@ func TestExecRunner_History_Zsh(t *testing.T) {
 
 func TestExecRunner_History_Fish(t *testing.T) {
 	tmp := t.TempDir()
-	os.Setenv("HOME", tmp)
-	os.Setenv("SHELL", "/usr/bin/fish")
+	t.Setenv("HOME", tmp)
+	t.Setenv("SHELL", "/usr/bin/fish")
 	old := commandContext
 	defer func() { commandContext = old }()
 	var got []string
