@@ -6,7 +6,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 
 project_name: cmd
 
@@ -45,13 +45,13 @@ changelog:
 
 brews:
   - name: cmd
-    tap:
+    repository:
       owner: pranjaltech
       name: homebrew-tools
     commit_author:
       name: GitHub Actions
       email: actions@github.com
-    folder: Formula
+    directory: Formula
     skip_upload: true
     install: |
       bin.install "cmd"
