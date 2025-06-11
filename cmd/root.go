@@ -39,6 +39,7 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 			" Configuration is read from $HOME/.config/cmd/config.yaml or $CMD_CONFIG." +
 			" Fields:\n  api_key - OpenAI token (encrypted)\n  model - model name" +
 			" (default " + config.DefaultModel + ")\n  temperature - sampling temperature",
+		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if *client == nil {

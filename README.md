@@ -21,6 +21,7 @@ scripts/uninstall.sh
 1. Run `cmd <prompt>` and enter your OpenAI API key when prompted. It is stored
    encrypted under `$HOME/.config/cmd/config.yaml` for future use.
 2. Subsequent runs reuse the saved key automatically.
+3. A prompt is required; running `cmd` without any arguments returns an error.
 
 ```bash
 cmd list all directories

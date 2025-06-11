@@ -53,3 +53,14 @@ func TestRootCmd_NoClient(t *testing.T) {
 		t.Fatalf("expected error when api key missing, got %v", err)
 	}
 }
+
+func TestRootCmd_NoPrompt(t *testing.T) {
+	r := &stubRunner{}
+	c := llm.Client(stubLLM{out: []string{"ls"}})
+	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: "ls"}, r)
+	cmd.SetArgs([]string{})
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "at least 1 arg") {
+		t.Fatalf("expected arg error, got %v", err)
+	}
+}
