@@ -101,3 +101,18 @@ func TestRootCmd_ClarificationFlow(t *testing.T) {
 		t.Errorf("expected runner to execute ls, got %q", r.cmd)
 	}
 }
+
+func TestRootCmd_VersionFlag(t *testing.T) {
+	c := llm.Client(stubLLM{out: []string{"ls"}})
+	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: "ls"}, &stubRunner{})
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetArgs([]string{"--version"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if !strings.Contains(out, Version) {
+		t.Errorf("expected output to contain %q, got %q", Version, out)
+	}
+}

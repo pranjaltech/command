@@ -8,29 +8,38 @@
 
 #### Stable release
 
-Tap the tools repository and install the prebuilt binary:
+Tap the tools repository and install the prebuilt binary as a Homebrew cask:
 
 ```bash
-brew install pranjaltech/tools/cmd
+brew install --cask pranjaltech/tools/cmd
 ```
 
-This formula lives in the
+This cask lives in the
 [pranjaltech/homebrew-tools](https://github.com/pranjaltech/homebrew-tools) tap
 and is generated on each tagged release.
 
 #### Development version
 
-To try a branch build directly from this repository, install the formula using
-its raw file URL (replace `main` with another branch name if needed):
+To try a branch build directly from this repository, install the cask using its
+raw file URL. **Homebrew will reject the regular GitHub web URL** – it must be
+the direct `.rb` file. Replace `main` with another branch name if needed:
 
 ```bash
-brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/cmd.rb
+brew install --cask \
+  https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd.rb
+```
+
+For another branch, replace `main` with the branch name. For example:
+
+```bash
+brew install --cask \
+  https://raw.githubusercontent.com/pranjaltech/command/my-feature/Casks/cmd.rb
 ```
 
 To uninstall either version:
 
 ```bash
-brew uninstall cmd
+brew uninstall --cask cmd
 ```
 
 ### Manual build
@@ -55,6 +64,7 @@ scripts/uninstall.sh
    encrypted under `$HOME/.config/cmd/config.yaml` for future use.
 2. Subsequent runs reuse the saved key automatically.
 3. A prompt is required; running `cmd` without any arguments returns an error.
+4. Use `cmd --version` to verify which build is installed.
 
 ```bash
 cmd list all directories

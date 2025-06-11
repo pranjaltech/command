@@ -6,7 +6,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 
 project_name: cmd
 
@@ -27,14 +27,16 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -s -w -X command/cmd.Version={{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
 
 changelog:
   sort: asc
@@ -43,18 +45,14 @@ changelog:
       - "^docs:"
       - "^test:"
 
-brews:
+homebrew_casks:
   - name: cmd
-    tap:
+    repository:
       owner: pranjaltech
       name: homebrew-tools
     commit_author:
       name: GitHub Actions
       email: actions@github.com
-    folder: Formula
+    directory: Casks
     skip_upload: true
-    install: |
-      bin.install "cmd"
-    test: |
-      output = shell_output("#{bin}/cmd 2>&1", 1)
-      assert_match "A prompt is required", output
+    binary: cmd
