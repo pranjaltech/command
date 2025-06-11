@@ -56,6 +56,7 @@ scripts/uninstall.sh
    encrypted under `$HOME/.config/cmd/config.yaml` for future use.
 2. Subsequent runs reuse the saved key automatically.
 3. A prompt is required; running `cmd` without any arguments returns an error.
+4. Use `cmd --version` to verify which build is installed.
 
 ```bash
 cmd list all directories
