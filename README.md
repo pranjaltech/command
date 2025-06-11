@@ -39,6 +39,22 @@ Fields:
 
 You can override `model` and `temperature` with `--model` and `--temperature` flags. The values are persisted back to the config file.
 
+To view your current configuration:
+
+```bash
+cmd config view
+```
+
+To change a setting:
+
+```bash
+cmd config set model gpt-4o
+cmd config set temperature 0.1
+cmd config set api_key sk-...
+```
+
+All changes are saved immediately and reused in subsequent runs.
+
 ## Development
 
 This project requires Go 1.22+. After cloning, install helper tools with `.codex/setup.sh` and run the verification suite:

@@ -98,6 +98,7 @@ func init() {
 	temperature = cfg.Temperature
 
 	rootCmd = NewRootCmd(&client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
+	rootCmd.AddCommand(configCmd)
 	rootCmd.PersistentFlags().StringVar(&model, "model", model, "OpenAI model")
 	rootCmd.PersistentFlags().Float32Var(&temperature, "temperature", temperature, "sampling temperature")
 
