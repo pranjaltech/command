@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -112,5 +113,24 @@ func TestOpenAIClient_DebugOutput(t *testing.T) {
 	if !strings.Contains(out, "llm system prompt:") || !strings.Contains(out, "llm user prompt: list") ||
 		!strings.Contains(out, "llm raw response") {
 		t.Errorf("debug output missing, got: %s", out)
+	}
+}
+
+func TestOpenAIClient_NeedClarification(t *testing.T) {
+	stub := &stubChat{
+		resp: openai.ChatCompletionResponse{
+			Choices: []openai.ChatCompletionChoice{{
+				Message: openai.ChatCompletionMessage{
+					Content: "{\"commands\":[],\"need_clarification\":\"which dir?\"}",
+				},
+			}},
+		},
+	}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	env := probe.EnvInfo{OS: "linux"}
+	_, err := client.GenerateCommands(context.Background(), "list", env)
+	var nc NeedClarificationError
+	if !errors.As(err, &nc) || !strings.Contains(nc.Question, "which dir") {
+		t.Fatalf("expected clarification error, got %v", err)
 	}
 }

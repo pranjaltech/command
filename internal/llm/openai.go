@@ -73,6 +73,17 @@ type OpenAIClient struct {
 	out         io.Writer
 }
 
+// NeedClarificationError is returned when the model asks a follow-up question
+// instead of providing commands.
+type NeedClarificationError struct{ Question string }
+
+func (e NeedClarificationError) Error() string {
+	if e.Question == "" {
+		return "clarification requested"
+	}
+	return "clarification requested: " + e.Question
+}
+
 func buildSystemPrompt(env probe.EnvInfo) (string, error) {
 	envJSON, err := json.Marshal(env)
 	if err != nil {
@@ -188,10 +199,18 @@ func (c *OpenAIClient) GenerateCommands(ctx context.Context, prompt string, env 
 		return nil, fmt.Errorf("no choices returned")
 	}
 	var raw struct {
-		Commands []json.RawMessage `json:"commands"`
+		Commands          []json.RawMessage `json:"commands"`
+		NeedClarification json.RawMessage   `json:"need_clarification"`
 	}
 	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &raw); err != nil {
 		return nil, fmt.Errorf("unmarshal: %w", err)
+	}
+
+	if len(raw.NeedClarification) > 0 && string(raw.NeedClarification) != "null" {
+		var q string
+		if err := json.Unmarshal(raw.NeedClarification, &q); err == nil && q != "" {
+			return nil, NeedClarificationError{Question: q}
+		}
 	}
 
 	var out []string
