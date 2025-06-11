@@ -4,13 +4,46 @@
 
 ## Installation
 
-Use the provided script to build and install the binary to `/usr/local/bin` (override `PREFIX` to change the target directory). If the directory is not writable, run the script with `sudo` or set `PREFIX` to a path you own:
+### Homebrew
+
+#### Stable release
+
+Tap the tools repository and install the prebuilt binary:
+
+```bash
+brew install pranjaltech/tools/cmd
+```
+
+This formula lives in the
+[pranjaltech/homebrew-tools](https://github.com/pranjaltech/homebrew-tools) tap
+and is generated on each tagged release.
+
+#### Development version
+
+To try a branch build directly from this repository, install the formula using
+its raw file URL (replace `main` with another branch name if needed):
+
+```bash
+brew install https://raw.githubusercontent.com/pranjaltech/command/main/Formula/cmd.rb
+```
+
+To uninstall either version:
+
+```bash
+brew uninstall cmd
+```
+
+### Manual build
+
+Use the provided script to build and install the binary to `/usr/local/bin`
+(override `PREFIX` to change the target directory). If the directory is not
+writable, run the script with `sudo` or set `PREFIX` to a path you own:
 
 ```bash
 scripts/install.sh
 ```
 
-To uninstall:
+To uninstall the manually installed binary:
 
 ```bash
 scripts/uninstall.sh
