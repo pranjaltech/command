@@ -70,9 +70,8 @@ func TestRootCmd_NoPrompt(t *testing.T) {
 	c := llm.Client(stubLLM{out: []string{"ls"}})
 	cmd := NewRootCmd(&c, stubProbe{}, stubSelector{pick: "ls"}, r)
 	cmd.SetArgs([]string{})
-	err := cmd.Execute()
-	if err == nil || !strings.Contains(err.Error(), "at least 1 arg") {
-		t.Fatalf("expected arg error, got %v", err)
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
 	}
 }
 

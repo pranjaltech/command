@@ -22,8 +22,16 @@ var setCmd = &cobra.Command{
 			return err
 		}
 		switch args[0] {
+		case "provider":
+			cfg.Provider = args[1]
 		case "api_key":
-			cfg.APIKey = args[1]
+			p := cfg.Providers[cfg.Provider]
+			p.APIKey = args[1]
+			cfg.Providers[cfg.Provider] = p
+		case "api_url":
+			p := cfg.Providers[cfg.Provider]
+			p.APIURL = args[1]
+			cfg.Providers[cfg.Provider] = p
 		case "model":
 			cfg.Model = args[1]
 		case "temperature":
@@ -32,6 +40,12 @@ var setCmd = &cobra.Command{
 				return err
 			}
 			cfg.Temperature = float32(f)
+		case "telemetry":
+			if args[1] == "off" {
+				cfg.TelemetryDisable = true
+			} else {
+				cfg.TelemetryDisable = false
+			}
 		default:
 			return fmt.Errorf("unknown field %q", args[0])
 		}

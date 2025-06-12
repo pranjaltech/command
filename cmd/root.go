@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"command/internal/log"
 	"command/internal/probe"
 	"command/internal/shell"
+	"command/internal/telemetry"
 	"command/internal/ui"
 
 	"github.com/joho/godotenv"
@@ -42,9 +44,12 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 			" Fields:\n  api_key - OpenAI token (encrypted)\n  model - model name" +
 			" (default " + config.DefaultModel + ")\n  temperature - sampling temperature",
 		Version:      Version,
-		Args:         cobra.MinimumNArgs(1),
+		Args:         cobra.ArbitraryArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return cmd.Help()
+			}
 			if *client == nil {
 				return errors.New("api key not configured")
 			}
@@ -80,6 +85,9 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				return err
 			}
 			log.Debugf("suggestions: %v", cmds)
+			if track != nil {
+				track.Generation(phrase, model, cmds)
+			}
 			choice, err := sel.Select(cmds)
 			if err != nil {
 				return err
@@ -93,10 +101,10 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 var rootCmd *cobra.Command
 var (
 	cfg         *config.Config
-	apiKey      string
 	model       string
 	temperature float32
 	client      llm.Client
+	track       telemetry.Tracker
 	debug       bool
 )
 
@@ -119,10 +127,6 @@ func init() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
 	}
-	apiKey = os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		apiKey = cfg.APIKey
-	}
 	model = cfg.Model
 	temperature = cfg.Temperature
 
@@ -133,27 +137,51 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose debug output")
 
 	rootCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if apiKey == "" {
-			if term.IsTerminal(int(os.Stdin.Fd())) {
-				fmt.Fprint(os.Stderr, "Enter OpenAI API key: ")
-				reader := bufio.NewReader(os.Stdin)
-				key, _ := reader.ReadString('\n')
-				apiKey = strings.TrimSpace(key)
+		if cfg.Provider == "" {
+			if err := runOnboarding(); err != nil {
+				return err
+			}
+			var err error
+			cfg, err = config.Load()
+			if err != nil {
+				return err
 			}
 		}
-		var err error
+
+		p, ok := cfg.Providers[cfg.Provider]
+		if !ok {
+			return fmt.Errorf("provider %s not configured", cfg.Provider)
+		}
+
+		if p.APIKey == "" && term.IsTerminal(int(os.Stdin.Fd())) {
+			fmt.Fprintf(os.Stderr, "Enter %s API key: ", cfg.Provider)
+			reader := bufio.NewReader(os.Stdin)
+			key, _ := reader.ReadString('\n')
+			p.APIKey = strings.TrimSpace(key)
+			cfg.Providers[cfg.Provider] = p
+		}
+
 		if debug {
 			log.Enable(os.Stderr)
 		}
-		oa, err := llm.NewOpenAIClient(apiKey, model, temperature)
+
+		var err error
+		client, err = llm.NewClient(cfg.Provider, p.APIKey, p.APIURL, model, temperature)
 		if err != nil {
 			return err
 		}
 		if debug {
-			oa.EnableDebug(os.Stderr)
+			if dbg, ok := client.(interface{ EnableDebug(io.Writer) }); ok {
+				dbg.EnableDebug(os.Stderr)
+			}
 		}
-		client = oa
-		cfg.APIKey = apiKey
+
+		if cfg.TelemetryDisable {
+			track = telemetry.Disabled()
+		} else {
+			track = telemetry.NewFromEnv(cmd.Context())
+		}
+
 		cfg.Model = model
 		cfg.Temperature = temperature
 		return config.Save(cfg)

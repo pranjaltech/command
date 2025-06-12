@@ -1,118 +1,42 @@
 # cmd
 
-`cmd` converts natural language instructions into shell commands using OpenAI. It collects details about your environment to craft accurate suggestions and lets you choose the command to execute.
+A command-line helper that turns English instructions into shell commands. It gathers some environment details to improve accuracy and lets you review the suggested commands before running them.
 
-## Installation
+## For Users
 
-### Homebrew
+### Install
+- **Homebrew**: `brew install --cask pranjaltech/tools/cmd`
+- **Manual build**: run `scripts/install.sh` and it will place the binary under `/usr/local/bin`.
 
-#### Stable release
+The tool works on macOS and Linux with Go 1.22+ installed.
 
-Tap the tools repository and install the prebuilt binary as a Homebrew cask:
+### What can it do?
+- Translate natural language into runnable shell commands.
+- Let you pick and edit the generated command.
+- Remember your configuration in `~/.config/cmd/config.yaml`.
 
-```bash
-brew install --cask pranjaltech/tools/cmd
-```
+Run `cmd "your prompt"` to start.
 
-This cask lives in the
-[pranjaltech/homebrew-tools](https://github.com/pranjaltech/homebrew-tools) tap
-and is generated on each tagged release.
+## For Developers
 
-#### Development version
-
-To try a branch build directly from this repository, install the cask using its
-raw file URL. **Homebrew will reject the regular GitHub web URL** – it must be
-the direct `.rb` file. Replace `main` with another branch name if needed:
-
-```bash
-brew install --cask \
-  https://raw.githubusercontent.com/pranjaltech/command/main/Casks/cmd.rb
-```
-
-For another branch, replace `main` with the branch name. For example:
-
-```bash
-brew install --cask \
-  https://raw.githubusercontent.com/pranjaltech/command/my-feature/Casks/cmd.rb
-```
-
-To uninstall either version:
-
-```bash
-brew uninstall --cask cmd
-```
-
-### Manual build
-
-Use the provided script to build and install the binary to `/usr/local/bin`
-(override `PREFIX` to change the target directory). If the directory is not
-writable, run the script with `sudo` or set `PREFIX` to a path you own:
-
-```bash
-scripts/install.sh
-```
-
-To uninstall the manually installed binary:
-
-```bash
-scripts/uninstall.sh
-```
-
-## Usage
-
-1. Run `cmd <prompt>` and enter your OpenAI API key when prompted. It is stored
-   encrypted under `$HOME/.config/cmd/config.yaml` for future use.
-2. Subsequent runs reuse the saved key automatically.
-3. A prompt is required; running `cmd` without any arguments returns an error.
-4. Use `cmd --version` to verify which build is installed.
-
-```bash
-cmd list all directories
-```
-
-A list of up to three commands is shown. Use the arrow keys to pick one and press `Enter` to run it. The first command is selected by default.
-The executed command is appended to your shell's history file so it can be recalled later. Some shells, like fish, may not show it in the current session until you start a new one or run `history merge`.
-
-Pass `--debug` to print the full prompt, environment info and LLM response to stderr. This is helpful when troubleshooting.
-
-### Configuration
-
-Settings are stored in `$HOME/.config/cmd/config.yaml` (override with `CMD_CONFIG`).
-Fields:
-
-- `api_key` – your OpenAI API token (encrypted)
-- `model` – model name to use (default `gpt-4o-mini`)
-- `temperature` – sampling temperature for the LLM
-
-You can override `model` and `temperature` with `--model` and `--temperature` flags. The values are persisted back to the config file.
-
-To view your current configuration:
-
-```bash
-cmd config view
-```
-
-To change a setting:
-
-```bash
-cmd config set model gpt-4o
-cmd config set temperature 0.1
-cmd config set api_key sk-...
-```
-
-All changes are saved immediately and reused in subsequent runs.
-
-## Development
-
-This project requires Go 1.22+. After cloning, install helper tools with `.codex/setup.sh` and run the verification suite:
+Clone the repo and install the helper tools:
 
 ```bash
 ./.codex/setup.sh
+```
+
+Run the verification suite before sending patches:
+
+```bash
 golangci-lint run ./...
 staticcheck ./...
-golines -m 120 -w $(git ls-files '*.go')
+Golines -m 120 -w $(git ls-files '*.go')
 go vet ./...
 go test -race -coverprofile=coverage.out ./...
 ```
 
-Project goals, phases and architecture decisions are documented in [`PROJECT.md`](PROJECT.md). Active tasks live in the `tasks/` directory, while completed tasks are archived in `completed_tasks.md`.
+### Contributing
+- Follow Go conventions (`go fmt` etc.).
+- Keep tests passing and add new ones for your changes.
+- Document behaviour in this README when it affects users.
+
