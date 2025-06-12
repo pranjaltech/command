@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"os"
 
 	lf "github.com/henomis/langfuse-go"
 	lfmodel "github.com/henomis/langfuse-go/model"
@@ -15,6 +16,9 @@ type Tracker interface {
 
 // NewFromEnv creates a Langfuse tracker using environment variables.
 func NewFromEnv(ctx context.Context) Tracker {
+	if os.Getenv("LANGFUSE_PUBLIC_KEY") == "" || os.Getenv("LANGFUSE_SECRET_KEY") == "" {
+		return noop{}
+	}
 	return &langfuseTracker{lf: lf.New(ctx)}
 }
 
