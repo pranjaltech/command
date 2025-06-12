@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,6 +17,22 @@ type pickItem struct{ title string }
 func (i pickItem) Title() string       { return i.title }
 func (i pickItem) Description() string { return "" }
 func (i pickItem) FilterValue() string { return i.title }
+
+type simpleDelegate struct{}
+
+func (simpleDelegate) Height() int  { return 1 }
+func (simpleDelegate) Spacing() int { return 0 }
+func (simpleDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	return nil
+}
+func (simpleDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+	it, _ := item.(pickItem)
+	cursor := "  "
+	if index == m.Index() {
+		cursor = "> "
+	}
+	fmt.Fprintf(w, "%s%s", cursor, it.title)
+}
 
 // pickModel wraps bubbles list for simple item selection.
 // Digits 1-9 can be used to select directly.
@@ -35,7 +52,8 @@ func newPickModel(options []string) pickModel {
 			width = len(title)
 		}
 	}
-	l := list.New(items, list.NewDefaultDelegate(), width+4, len(items)+2)
+	delegate := simpleDelegate{}
+	l := list.New(items, delegate, width+2, len(items))
 	l.Title = ""
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
