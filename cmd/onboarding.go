@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
+	"golang.org/x/term"
+
 	"command/internal/config"
+	"command/internal/ui"
 )
 
 type providerOption struct {
@@ -43,17 +45,19 @@ var providerMap = func() map[string]providerOption {
 func runOnboarding() error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("This tool requires an AI model to work. Please select your AI model provider:")
+	names := make([]string, len(providerOptions))
 	for i, p := range providerOptions {
-		fmt.Printf("%d. %s\n", i+1, p.Name)
+		names[i] = p.Name
 	}
-	fmt.Print("> ")
-	choiceStr, _ := reader.ReadString('\n')
-	choiceStr = strings.TrimSpace(choiceStr)
-	idx, _ := strconv.Atoi(choiceStr)
-	if idx < 1 || idx > len(providerOptions) {
+	picker := ui.NewPicker()
+	idx, err := picker.Pick(names)
+	if err != nil {
+		return err
+	}
+	if idx < 0 || idx >= len(providerOptions) {
 		return fmt.Errorf("invalid choice")
 	}
-	sel := providerOptions[idx-1]
+	sel := providerOptions[idx]
 
 	envKey := os.Getenv(sel.KeyEnv)
 	if envKey != "" {
@@ -62,8 +66,9 @@ func runOnboarding() error {
 
 	fmt.Printf("Selected Provider: %s\n", sel.Name)
 	fmt.Print("Please provide an API key: ")
-	key, _ := reader.ReadString('\n')
-	key = strings.TrimSpace(key)
+	b, _ := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	key := strings.TrimSpace(string(b))
 	if key == "" {
 		key = envKey
 	}
@@ -101,6 +106,8 @@ func runOnboarding() error {
 	if err := config.Save(cfg); err != nil {
 		return err
 	}
-	fmt.Println("cmd is ready! Type `cmd \"the command you want\"` to start.")
+	fmt.Println("\u2705 cmd is ready! Type `cmd \"the command you want\"` to start.")
+	fmt.Println("----")
+	fmt.Println("You can change models and more using 'cmd config'.")
 	return nil
 }
