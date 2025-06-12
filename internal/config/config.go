@@ -151,9 +151,13 @@ func Save(c *Config) error {
 	v.SetConfigType("yaml")
 	prov := make(map[string]map[string]string)
 	for name, p := range c.Providers {
-		encKey, err := encrypt(p.APIKey)
-		if err != nil {
-			return err
+		encKey := ""
+		if p.APIKey != "" {
+			var err error
+			encKey, err = encrypt(p.APIKey)
+			if err != nil {
+				return err
+			}
 		}
 		prov[name] = map[string]string{
 			"api_key": encKey,

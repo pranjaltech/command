@@ -10,13 +10,13 @@ Acceptance Criteria:
 - Verification suite passes.
 
 Implementation Checklist:
-- [ ] Extend Config struct with provider map and telemetry flag.
-- [ ] Update Save/Load and tests for new fields.
-- [ ] Add onboarding function in cmd package.
-- [ ] Adjust root and config commands to invoke onboarding when needed.
-- [ ] Integrate langfuse-go library behind telemetry package.
-- [ ] Record generation events when telemetry enabled.
-- [ ] Revise README structure.
-- [ ] Run formatting and verification commands.
+- [x] Extend Config struct with provider map and telemetry flag.
+- [x] Update Save/Load and tests for new fields.
+- [x] Add onboarding function in cmd package.
+- [x] Adjust root and config commands to invoke onboarding when needed.
+- [x] Integrate langfuse-go library behind telemetry package.
+- [x] Record generation events when telemetry enabled.
+- [x] Revise README structure.
+- [x] Run formatting and verification commands.
 
-Status: 🚧 in-progress
+Status: Completed

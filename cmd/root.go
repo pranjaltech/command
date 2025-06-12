@@ -150,16 +150,31 @@ func init() {
 
 		p, ok := cfg.Providers[cfg.Provider]
 		if !ok {
-			return fmt.Errorf("provider %s not configured", cfg.Provider)
+			p = config.Provider{}
 		}
-
+		opt, okOpt := providerMap[cfg.Provider]
+		if !okOpt {
+			return fmt.Errorf("provider %s not supported", cfg.Provider)
+		}
+		if p.APIKey == "" {
+			if v := os.Getenv(opt.KeyEnv); v != "" {
+				p.APIKey = v
+			}
+		}
+		if p.APIURL == "" {
+			if v := os.Getenv(opt.URLEnv); v != "" {
+				p.APIURL = v
+			} else if opt.URL != "" {
+				p.APIURL = opt.URL
+			}
+		}
 		if p.APIKey == "" && term.IsTerminal(int(os.Stdin.Fd())) {
 			fmt.Fprintf(os.Stderr, "Enter %s API key: ", cfg.Provider)
 			reader := bufio.NewReader(os.Stdin)
 			key, _ := reader.ReadString('\n')
 			p.APIKey = strings.TrimSpace(key)
-			cfg.Providers[cfg.Provider] = p
 		}
+		cfg.Providers[cfg.Provider] = p
 
 		if debug {
 			log.Enable(os.Stderr)

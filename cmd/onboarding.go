@@ -10,17 +10,35 @@ import (
 	"command/internal/config"
 )
 
-var providerOptions = []struct {
-	Name string
-	Key  string
-	URL  string
-}{
-	{"OpenAI", "openai", "https://api.openai.com/v1"},
-	{"Anthropic", "anthropic", "https://api.anthropic.com"},
-	{"Gemini (Google)", "gemini", "https://generativelanguage.googleapis.com/v1beta"},
-	{"OpenRouter", "openrouter", "https://openrouter.ai/api/v1"},
-	{"Ollama (local)", "ollama", "http://localhost:11434"},
+type providerOption struct {
+	Name   string
+	Key    string
+	URL    string
+	KeyEnv string
+	URLEnv string
 }
+
+var providerOptions = []providerOption{
+	{"OpenAI", "openai", "https://api.openai.com/v1", "OPENAI_API_KEY", "OPENAI_BASE_URL"},
+	{"Anthropic", "anthropic", "https://api.anthropic.com", "ANTHROPIC_API_KEY", "ANTHROPIC_API_URL"},
+	{
+		"Gemini (Google)",
+		"gemini",
+		"https://generativelanguage.googleapis.com/v1beta",
+		"GEMINI_API_KEY",
+		"GEMINI_API_URL",
+	},
+	{"OpenRouter", "openrouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "OPENROUTER_API_URL"},
+	{"Ollama (local)", "ollama", "http://localhost:11434", "OLLAMA_API_KEY", "OLLAMA_API_URL"},
+}
+
+var providerMap = func() map[string]providerOption {
+	m := make(map[string]providerOption)
+	for _, p := range providerOptions {
+		m[p.Key] = p
+	}
+	return m
+}()
 
 func runOnboarding() error {
 	reader := bufio.NewReader(os.Stdin)
@@ -37,19 +55,35 @@ func runOnboarding() error {
 	}
 	sel := providerOptions[idx-1]
 
+	envKey := os.Getenv(sel.KeyEnv)
+	if envKey != "" {
+		fmt.Printf("Using %s from %s\n", sel.Name, sel.KeyEnv)
+	}
+
 	fmt.Printf("Selected Provider: %s\n", sel.Name)
 	fmt.Print("Please provide an API key: ")
 	key, _ := reader.ReadString('\n')
 	key = strings.TrimSpace(key)
 	if key == "" {
+		key = envKey
+	}
+	if key == "" {
 		return fmt.Errorf("api key is required")
 	}
 
+	envURL := os.Getenv(sel.URLEnv)
+	if envURL != "" {
+		fmt.Printf("Using %s for API URL from %s\n", envURL, sel.URLEnv)
+	}
 	fmt.Printf("Confirm the API URL: %s\n> ", sel.URL)
 	urlInput, _ := reader.ReadString('\n')
 	urlInput = strings.TrimSpace(urlInput)
 	if urlInput == "" {
-		urlInput = sel.URL
+		if envURL != "" {
+			urlInput = envURL
+		} else {
+			urlInput = sel.URL
+		}
 	}
 
 	fmt.Print("Can we collect some anonymous telemetry to improve this tool? [y/N]: ")
