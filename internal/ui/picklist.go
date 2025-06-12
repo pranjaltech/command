@@ -27,15 +27,21 @@ type pickModel struct {
 
 func newPickModel(options []string) pickModel {
 	items := make([]list.Item, len(options))
+	width := 0
 	for i, opt := range options {
-		items[i] = pickItem{title: fmt.Sprintf("%d. %s", i+1, opt)}
+		title := fmt.Sprintf("%d. %s", i+1, opt)
+		items[i] = pickItem{title: title}
+		if len(title) > width {
+			width = len(title)
+		}
 	}
-	l := list.New(items, list.NewDefaultDelegate(), 0, len(items)+2)
+	l := list.New(items, list.NewDefaultDelegate(), width+4, len(items)+2)
 	l.Title = ""
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
 	l.SetShowTitle(false)
+	l.SetShowPagination(false)
 	return pickModel{list: l}
 }
 
