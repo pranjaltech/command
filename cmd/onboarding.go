@@ -66,8 +66,11 @@ func runOnboarding() error {
 
 	fmt.Printf("Selected Provider: %s\n", sel.Name)
 	fmt.Print("Please provide an API key: ")
-	b, _ := term.ReadPassword(int(os.Stdin.Fd()))
+	b, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Println()
+	if err != nil {
+		return err
+	}
 	key := strings.TrimSpace(string(b))
 	if key == "" {
 		key = envKey
@@ -81,7 +84,10 @@ func runOnboarding() error {
 		fmt.Printf("Using %s for API URL from %s\n", envURL, sel.URLEnv)
 	}
 	fmt.Printf("Confirm the API URL: %s\n> ", sel.URL)
-	urlInput, _ := reader.ReadString('\n')
+	urlInput, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
 	urlInput = strings.TrimSpace(urlInput)
 	if urlInput == "" {
 		if envURL != "" {
@@ -92,7 +98,10 @@ func runOnboarding() error {
 	}
 
 	fmt.Print("Can we collect some anonymous telemetry to improve this tool? [y/N]: ")
-	teleStr, _ := reader.ReadString('\n')
+	teleStr, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
 	tele := strings.TrimSpace(strings.ToLower(teleStr))
 	enableTelemetry := tele == "y" || tele == "yes"
 
