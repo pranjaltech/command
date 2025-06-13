@@ -194,7 +194,7 @@ func init() {
 		if cfg.TelemetryDisable {
 			track = telemetry.Disabled()
 		} else {
-			track = telemetry.NewFromEnv(cmd.Context())
+			track = telemetry.NewFromEnv(cmd.Context(), debug)
 		}
 
 		cfg.Model = model

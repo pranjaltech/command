@@ -8,6 +8,6 @@ Acceptance Criteria:
 Implementation Checklist:
 - [x] Adjust list help style to remove top padding.
 - [x] Ensure loader doesn't emit extra newlines.
-- [ ] Update unit tests if needed.
+ - [x] Update unit tests if needed.
 
 Status: Completed
