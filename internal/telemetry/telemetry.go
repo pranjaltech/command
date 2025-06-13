@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"os"
+	"sync"
 	"time"
 
 	lf "github.com/henomis/langfuse-go"
@@ -16,6 +17,10 @@ import (
 type Tracker interface {
 	Generation(prompt, model string, commands []string)
 }
+
+// stdoutMu guards temporary rewrites of os.Stdout when silencing
+// langfuse-go's fmt prints.
+var stdoutMu sync.Mutex
 
 // NewFromEnv creates a Langfuse tracker using environment variables.
 func NewFromEnv(ctx context.Context, debug bool) Tracker {
@@ -41,11 +46,13 @@ func (l *langfuseTracker) Generation(prompt, model string, commands []string) {
 		if !l.debug {
 			devNull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 			if err == nil {
+				stdoutMu.Lock()
 				orig := os.Stdout
 				os.Stdout = devNull
 				defer func() {
 					os.Stdout = orig
 					_ = devNull.Close()
+					stdoutMu.Unlock()
 				}()
 			}
 		}
