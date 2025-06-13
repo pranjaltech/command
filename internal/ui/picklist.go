@@ -3,7 +3,6 @@ package ui
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -22,22 +21,6 @@ type pickItem struct{ title string }
 func (i pickItem) Title() string       { return i.title }
 func (i pickItem) Description() string { return "" }
 func (i pickItem) FilterValue() string { return i.title }
-
-type simpleDelegate struct{}
-
-func (simpleDelegate) Height() int  { return 1 }
-func (simpleDelegate) Spacing() int { return 0 }
-func (simpleDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
-	return nil
-}
-func (simpleDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	it, _ := item.(pickItem)
-	cursor := "  "
-	if index == m.Index() {
-		cursor = "> "
-	}
-	fmt.Fprintf(w, "%s%s", cursor, it.title)
-}
 
 // pickModel wraps bubbles list for simple item selection.
 // Digits 1-9 can be used to select directly.
@@ -75,6 +58,9 @@ func (m pickModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetWidth(msg.Width)
+		return m, nil
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
 			m.choice = m.list.Index()
