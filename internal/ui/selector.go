@@ -52,6 +52,7 @@ func newModel(options []string) model {
 	l.SetFilteringEnabled(false)
 	l.Title = ""
 	l.SetShowTitle(false)
+	l.Styles.HelpStyle = l.Styles.HelpStyle.UnsetPadding()
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.CharLimit = 0
