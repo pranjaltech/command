@@ -1,9 +1,16 @@
 package ui
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"golang.org/x/term"
 )
 
 // Selector chooses an option from a list.
@@ -40,11 +47,12 @@ func newModel(options []string) model {
 			width = l
 		}
 	}
-	l := list.New(items, list.NewDefaultDelegate(), width, len(options))
+	l := list.New(items, simpleDelegate{}, width, len(options))
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Title = ""
 	l.SetShowTitle(false)
+	l.Styles.HelpStyle = l.Styles.HelpStyle.UnsetPadding()
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.CharLimit = 0
@@ -59,6 +67,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m.state {
 	case stateList:
+		switch msg := msg.(type) {
+		case tea.WindowSizeMsg:
+			m.list.SetWidth(msg.Width)
+			return m, nil
+		}
 		m.list, cmd = m.list.Update(msg)
 		if key, ok := msg.(tea.KeyMsg); ok && key.Type == tea.KeyEnter {
 			if it, ok := m.list.SelectedItem().(item); ok {
@@ -68,6 +81,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case stateEdit:
+		switch msg := msg.(type) {
+		case tea.WindowSizeMsg:
+			m.input.Width = msg.Width
+		}
 		m.input, cmd = m.input.Update(msg)
 		if key, ok := msg.(tea.KeyMsg); ok && key.Type == tea.KeyEnter {
 			m.choice = m.input.Value()
@@ -85,9 +102,16 @@ func (m model) View() string {
 }
 
 type bubbleSelector struct{}
+type simpleSelector struct{}
 
-// NewSelector returns a Bubbletea-based selector.
-func NewSelector() Selector { return bubbleSelector{} }
+// NewSelector returns a selector that uses Bubbletea when a TTY is available and
+// falls back to basic stdin prompts otherwise.
+func NewSelector() Selector {
+	if !term.IsTerminal(int(os.Stdin.Fd())) || !term.IsTerminal(int(os.Stdout.Fd())) {
+		return simpleSelector{}
+	}
+	return bubbleSelector{}
+}
 
 func (bubbleSelector) Select(options []string) (string, error) {
 	m := newModel(options)
@@ -98,4 +122,36 @@ func (bubbleSelector) Select(options []string) (string, error) {
 	}
 	final := res.(model)
 	return final.choice, nil
+}
+
+func (simpleSelector) Select(options []string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	for i, opt := range options {
+		fmt.Fprintf(os.Stderr, "%d. %s\n", i+1, opt)
+	}
+	fmt.Fprint(os.Stderr, "> ")
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	line = strings.TrimSpace(line)
+	idx := 0
+	if line != "" {
+		n, err := strconv.Atoi(line)
+		if err != nil || n < 1 || n > len(options) {
+			return "", fmt.Errorf("invalid choice")
+		}
+		idx = n - 1
+	}
+	choice := options[idx]
+	fmt.Fprintf(os.Stderr, "%s\n> ", choice)
+	edit, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	edit = strings.TrimSpace(edit)
+	if edit != "" {
+		choice = edit
+	}
+	return choice, nil
 }

@@ -20,17 +20,25 @@ var viewCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		p := cfg.Providers[cfg.Provider]
 		key := "(none)"
-		if cfg.APIKey != "" {
-			if len(cfg.APIKey) <= 4 {
-				key = strings.Repeat("*", len(cfg.APIKey))
+		if p.APIKey != "" {
+			if len(p.APIKey) <= 4 {
+				key = strings.Repeat("*", len(p.APIKey))
 			} else {
-				key = strings.Repeat("*", len(cfg.APIKey)-4) + cfg.APIKey[len(cfg.APIKey)-4:]
+				key = strings.Repeat("*", len(p.APIKey)-4) + p.APIKey[len(p.APIKey)-4:]
 			}
 		}
+		fmt.Printf("provider: %s\n", cfg.Provider)
+		fmt.Printf("api_url: %s\n", p.APIURL)
 		fmt.Printf("model: %s\n", cfg.Model)
 		fmt.Printf("temperature: %.2f\n", cfg.Temperature)
 		fmt.Printf("api_key: %s\n", key)
+		if cfg.TelemetryDisable {
+			fmt.Println("telemetry: disabled")
+		} else {
+			fmt.Println("telemetry: enabled")
+		}
 		return nil
 	},
 }

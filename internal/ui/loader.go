@@ -30,5 +30,5 @@ func (l *Loader) Start() { l.s.Start() }
 // Stop stops the spinner and moves to the next line.
 func (l *Loader) Stop() {
 	l.s.Stop()
-	fmt.Fprintln(l.s.Writer)
+	fmt.Fprint(l.s.Writer, "\r")
 }

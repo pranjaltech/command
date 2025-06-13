@@ -14,10 +14,22 @@ import (
 )
 
 // Config holds persistent settings.
+// Provider stores credentials for an AI model provider.
+type Provider struct {
+	APIKey string `mapstructure:"api_key"`
+	APIURL string `mapstructure:"api_url"`
+}
+
+// Config holds persistent settings. Multiple providers can be stored so users
+// may switch without re-entering credentials.
 type Config struct {
-	APIKey      string  `mapstructure:"api_key"`
-	Model       string  `mapstructure:"model"`
-	Temperature float32 `mapstructure:"temperature"`
+	Provider         string              `mapstructure:"provider"`
+	Providers        map[string]Provider `mapstructure:"providers"`
+	Model            string              `mapstructure:"model"`
+	Temperature      float32             `mapstructure:"temperature"`
+	TelemetryDisable bool                `mapstructure:"telemetry_disable"`
+	// APIKey is kept for backward compatibility with older configs.
+	APIKey string `mapstructure:"api_key"`
 }
 
 const (
@@ -96,12 +108,28 @@ func Load() (*Config, error) {
 	}
 	var c Config
 	_ = v.Unmarshal(&c)
+	if c.Providers == nil {
+		c.Providers = make(map[string]Provider)
+	}
+	for name, p := range c.Providers {
+		if p.APIKey != "" {
+			dec, err := decrypt(p.APIKey)
+			if err != nil {
+				return nil, err
+			}
+			p.APIKey = dec
+			c.Providers[name] = p
+		}
+	}
 	if c.APIKey != "" {
 		dec, err := decrypt(c.APIKey)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			c.Providers["openai"] = Provider{APIKey: dec}
+			if c.Provider == "" {
+				c.Provider = "openai"
+			}
 		}
-		c.APIKey = dec
+		c.APIKey = ""
 	}
 	if v.GetString("model") == "" {
 		c.Model = DefaultModel
@@ -114,10 +142,6 @@ func Load() (*Config, error) {
 
 // Save writes configuration to disk.
 func Save(c *Config) error {
-	enc, err := encrypt(c.APIKey)
-	if err != nil {
-		return err
-	}
 	path := cfgPath()
 	if err := ensureDir(path); err != nil {
 		return err
@@ -125,8 +149,25 @@ func Save(c *Config) error {
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
-	v.Set("api_key", enc)
+	prov := make(map[string]map[string]string)
+	for name, p := range c.Providers {
+		encKey := ""
+		if p.APIKey != "" {
+			var err error
+			encKey, err = encrypt(p.APIKey)
+			if err != nil {
+				return err
+			}
+		}
+		prov[name] = map[string]string{
+			"api_key": encKey,
+			"api_url": p.APIURL,
+		}
+	}
+	v.Set("provider", c.Provider)
+	v.Set("providers", prov)
 	v.Set("model", c.Model)
 	v.Set("temperature", c.Temperature)
+	v.Set("telemetry_disable", c.TelemetryDisable)
 	return v.WriteConfigAs(path)
 }

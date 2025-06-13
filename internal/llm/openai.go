@@ -146,11 +146,14 @@ func (c *OpenAIClient) EnableDebug(w io.Writer) {
 }
 
 // NewOpenAIClient constructs an OpenAI-based LLM client.
-func NewOpenAIClient(apiKey, model string, temperature float32) (*OpenAIClient, error) {
+func NewOpenAIClient(apiKey, baseURL, model string, temperature float32) (*OpenAIClient, error) {
 	if apiKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 	cfg := openai.DefaultConfig(apiKey)
+	if baseURL != "" {
+		cfg.BaseURL = baseURL
+	}
 	if model == "" {
 		model = config.DefaultModel
 	}

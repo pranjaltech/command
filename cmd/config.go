@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"command/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +12,13 @@ var configCmd = &cobra.Command{
 	Short: "Manage cmd configuration",
 	Long:  "View or modify settings stored in $HOME/.config/cmd/config.yaml",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+		if cfg.Provider == "" {
+			return runOnboarding()
+		}
 		return cmd.Help()
 	},
 }
