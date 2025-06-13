@@ -1,11 +1,16 @@
 package ui
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"golang.org/x/term"
 )
 
 type Picker interface {
@@ -97,8 +102,15 @@ func (m pickModel) View() string { return m.list.View() }
 
 type bubblePicker struct{}
 
+type simplePicker struct{}
+
 // NewPicker creates a Picker implemented with Bubbletea.
-func NewPicker() Picker { return bubblePicker{} }
+func NewPicker() Picker {
+	if !term.IsTerminal(int(os.Stdin.Fd())) || !term.IsTerminal(int(os.Stdout.Fd())) {
+		return simplePicker{}
+	}
+	return bubblePicker{}
+}
 
 func (bubblePicker) Pick(options []string) (int, error) {
 	m := newPickModel(options)
@@ -109,4 +121,25 @@ func (bubblePicker) Pick(options []string) (int, error) {
 	}
 	final := res.(pickModel)
 	return final.choice, nil
+}
+
+func (simplePicker) Pick(options []string) (int, error) {
+	for i, opt := range options {
+		fmt.Fprintf(os.Stderr, "%d. %s\n", i+1, opt)
+	}
+	fmt.Fprint(os.Stderr, "> ")
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, err
+	}
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return 0, nil
+	}
+	idx, err := strconv.Atoi(line)
+	if err != nil || idx < 1 || idx > len(options) {
+		return 0, fmt.Errorf("invalid choice")
+	}
+	return idx - 1, nil
 }
