@@ -10,4 +10,4 @@ Implementation Checklist:
 - [x] Ensure loader doesn't emit extra newlines.
 - [ ] Update unit tests if needed.
 
-Status: In Progress
+Status: Completed
