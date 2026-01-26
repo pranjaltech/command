@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"command/internal/config"
 	"github.com/spf13/cobra"
@@ -34,12 +33,6 @@ var setCmd = &cobra.Command{
 			cfg.Providers[cfg.Provider] = p
 		case "model":
 			cfg.Model = args[1]
-		case "temperature":
-			f, err := strconv.ParseFloat(args[1], 32)
-			if err != nil {
-				return err
-			}
-			cfg.Temperature = float32(f)
 		case "telemetry":
 			if args[1] == "off" {
 				cfg.TelemetryDisable = true

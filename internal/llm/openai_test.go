@@ -36,7 +36,7 @@ func TestOpenAIClient_GenerateCommands(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel}
 	env := probe.EnvInfo{OS: "linux"}
 
 	got, err := client.GenerateCommands(context.Background(), "list", env)
@@ -70,7 +70,7 @@ func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel}
 	env := probe.EnvInfo{OS: "linux"}
 
 	got, err := client.GenerateCommands(context.Background(), "list", env)
@@ -85,7 +85,7 @@ func TestOpenAIClient_GenerateCommands_StringArray(t *testing.T) {
 func TestOpenAIClient_GenerateCommands_APIError(t *testing.T) {
 	apiErr := &openai.APIError{HTTPStatusCode: 400, Message: "bad"}
 	stub := &stubChat{err: apiErr}
-	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel}
 	env := probe.EnvInfo{OS: "linux"}
 	_, err := client.GenerateCommands(context.Background(), "", env)
 	if err == nil || !strings.Contains(err.Error(), "openai request failed") {
@@ -101,7 +101,7 @@ func TestOpenAIClient_DebugOutput(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel}
 	var buf strings.Builder
 	client.EnableDebug(&buf)
 	env := probe.EnvInfo{OS: "linux"}
@@ -128,7 +128,7 @@ func TestOpenAIClient_NeedClarification(t *testing.T) {
 			}},
 		},
 	}
-	client := &OpenAIClient{api: stub, model: config.DefaultModel, temperature: config.DefaultTemperature}
+	client := &OpenAIClient{api: stub, model: config.DefaultModel}
 	env := probe.EnvInfo{OS: "linux"}
 	_, err := client.GenerateCommands(context.Background(), "list", env)
 	var nc NeedClarificationError

@@ -32,7 +32,6 @@ var viewCmd = &cobra.Command{
 		fmt.Printf("provider: %s\n", cfg.Provider)
 		fmt.Printf("api_url: %s\n", p.APIURL)
 		fmt.Printf("model: %s\n", cfg.Model)
-		fmt.Printf("temperature: %.2f\n", cfg.Temperature)
 		fmt.Printf("api_key: %s\n", key)
 		if cfg.TelemetryDisable {
 			fmt.Println("telemetry: disabled")

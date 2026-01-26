@@ -1,12 +1,8 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
-
-	"golang.org/x/term"
 
 	"command/internal/config"
 	"command/internal/ui"
@@ -17,7 +13,7 @@ type providerOption struct {
 	Key    string
 	URL    string
 	KeyEnv string
-	URLEnv string
+	URLEnv string // For environment variable fallback (not shown in UI)
 }
 
 var providerOptions = []providerOption{
@@ -43,80 +39,65 @@ var providerMap = func() map[string]providerOption {
 }()
 
 func runOnboarding() error {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("This tool requires an AI model to work. Please select your AI model provider:")
-	names := make([]string, len(providerOptions))
-	for i, p := range providerOptions {
-		names[i] = p.Name
-	}
-	picker := ui.NewPicker()
-	idx, err := picker.Pick(names)
-	if err != nil {
-		return err
-	}
-	if idx < 0 || idx >= len(providerOptions) {
-		return fmt.Errorf("invalid choice")
-	}
-	sel := providerOptions[idx]
-
-	envKey := os.Getenv(sel.KeyEnv)
-	if envKey != "" {
-		fmt.Printf("Using %s from %s\n", sel.Name, sel.KeyEnv)
-	}
-
-	fmt.Printf("Selected Provider: %s\n", sel.Name)
-	fmt.Print("Please provide an API key: ")
-	b, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println("Welcome to cmd! Let's set up your AI provider.")
 	fmt.Println()
-	if err != nil {
-		return err
-	}
-	key := strings.TrimSpace(string(b))
-	if key == "" {
-		key = envKey
-	}
-	if key == "" {
-		return fmt.Errorf("api key is required")
+
+	// Build provider list for UI
+	providers := make([]ui.ProviderInfo, len(providerOptions))
+	for i, p := range providerOptions {
+		providers[i] = ui.ProviderInfo{Name: p.Name, Key: p.Key}
 	}
 
-	envURL := os.Getenv(sel.URLEnv)
-	if envURL != "" {
-		fmt.Printf("Using %s for API URL from %s\n", envURL, sel.URLEnv)
-	}
-	fmt.Printf("Confirm the API URL: %s\n> ", sel.URL)
-	urlInput, err := reader.ReadString('\n')
+	// Run the configuration UI
+	result, err := ui.RunConfigUI(providers, nil)
 	if err != nil {
 		return err
 	}
-	urlInput = strings.TrimSpace(urlInput)
-	if urlInput == "" {
-		if envURL != "" {
-			urlInput = envURL
-		} else {
-			urlInput = sel.URL
+
+	if result.Canceled {
+		fmt.Println("\nSetup canceled.")
+		return nil
+	}
+
+	// Get provider details
+	sel := providerMap[result.Provider]
+
+	// Check for environment variable fallback
+	apiKey := result.APIKey
+	if apiKey == "" {
+		envKey := os.Getenv(sel.KeyEnv)
+		if envKey != "" {
+			apiKey = envKey
+			fmt.Printf("\nUsing API key from %s\n", sel.KeyEnv)
 		}
 	}
 
-	fmt.Print("Can we collect some anonymous telemetry to improve this tool? [y/N]: ")
-	teleStr, err := reader.ReadString('\n')
-	if err != nil {
-		return err
+	// Ollama doesn't require an API key (local usage)
+	if apiKey == "" && sel.Key != "ollama" {
+		return fmt.Errorf("api key is required")
 	}
-	tele := strings.TrimSpace(strings.ToLower(teleStr))
-	enableTelemetry := tele == "y" || tele == "yes"
 
+	// Check for API URL environment variable
+	apiURL := sel.URL
+	if envURL := os.Getenv(sel.URLEnv); envURL != "" {
+		apiURL = envURL
+		fmt.Printf("Using API URL from %s: %s\n", sel.URLEnv, envURL)
+	}
+
+	// Save configuration
 	cfg := &config.Config{
 		Provider:         sel.Key,
-		Providers:        map[string]config.Provider{sel.Key: {APIKey: key, APIURL: urlInput}},
-		Model:            config.DefaultModel,
-		Temperature:      config.DefaultTemperature,
-		TelemetryDisable: !enableTelemetry,
+		Providers:        map[string]config.Provider{sel.Key: {APIKey: apiKey, APIURL: apiURL}},
+		Model:            config.DefaultModelForProvider(sel.Key),
+		TelemetryDisable: true, // Default to disabled
 	}
 	if err := config.Save(cfg); err != nil {
 		return err
 	}
-	fmt.Println("\u2705 cmd is ready! Type `cmd \"the command you want\"` to start.")
-	fmt.Println("----")
-	fmt.Println("You can change models and more using 'cmd config'.")
+
+	fmt.Println("\n" + ui.Checkmark() + " Configuration saved!")
+	fmt.Println("\nRun " + ui.BoldStyle.Render("cmd \"your command\"") + " to get started.")
+	fmt.Println(ui.MutedStyle.Render("Tip: Use 'cmd config' to change settings anytime."))
+
 	return nil
 }

@@ -16,8 +16,7 @@ func TestLoadSave(t *testing.T) {
 		Providers: map[string]Provider{
 			"openai": {APIKey: "secret", APIURL: "https://api.openai.com/v1"},
 		},
-		Model:       "gpt-4",
-		Temperature: 0.5,
+		Model: "gpt-4",
 	}
 	if err := Save(c); err != nil {
 		t.Fatalf("Save: %v", err)
@@ -29,7 +28,7 @@ func TestLoadSave(t *testing.T) {
 	if got.Providers["openai"].APIKey != "secret" {
 		t.Errorf("expected %q, got %q", "secret", got.Providers["openai"].APIKey)
 	}
-	if got.Model != "gpt-4" || got.Temperature != 0.5 {
-		t.Errorf("unexpected model/temperature: %#v", got)
+	if got.Model != "gpt-4" {
+		t.Errorf("unexpected model: %#v", got)
 	}
 }
