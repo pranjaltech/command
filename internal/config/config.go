@@ -26,17 +26,42 @@ type Config struct {
 	Provider         string              `mapstructure:"provider"`
 	Providers        map[string]Provider `mapstructure:"providers"`
 	Model            string              `mapstructure:"model"`
-	Temperature      float32             `mapstructure:"temperature"`
 	TelemetryDisable bool                `mapstructure:"telemetry_disable"`
 	// APIKey is kept for backward compatibility with older configs.
 	APIKey string `mapstructure:"api_key"`
 }
 
 const (
-	secret             = "01234567890123456789012345678901"
-	DefaultModel       = "gpt-4o-mini"
-	DefaultTemperature = 0.2
+	secret = "01234567890123456789012345678901"
+
+	// Provider-specific default models (2026 latest light/fast models)
+	DefaultModelOpenAI     = "gpt-4.1-nano"       // OpenAI's fastest & cheapest model with 1M context
+	DefaultModelAnthropic  = "claude-haiku-4-5"   // 4-5x faster than Sonnet 4.5 at fraction of cost
+	DefaultModelOpenRouter = "x-ai/grok-4.1-fast" // xAI's best agentic tool calling model with 2M context
+	DefaultModelGemini     = "gemini-3-flash"     // Pro-level intelligence at Flash speed, 3x faster than 2.5 Pro
+	DefaultModelOllama     = "qwen3:8b"           // Best local lightweight model, 25 tokens/sec on laptops
+
+	// DefaultModel is kept for backward compatibility
+	DefaultModel = DefaultModelOpenAI
 )
+
+// DefaultModelForProvider returns the default model for a given provider.
+func DefaultModelForProvider(provider string) string {
+	switch provider {
+	case "openai":
+		return DefaultModelOpenAI
+	case "anthropic":
+		return DefaultModelAnthropic
+	case "openrouter":
+		return DefaultModelOpenRouter
+	case "gemini":
+		return DefaultModelGemini
+	case "ollama":
+		return DefaultModelOllama
+	default:
+		return DefaultModelOpenAI
+	}
+}
 
 func cfgPath() string {
 	if p := os.Getenv("CMD_CONFIG"); p != "" {
@@ -134,9 +159,6 @@ func Load() (*Config, error) {
 	if v.GetString("model") == "" {
 		c.Model = DefaultModel
 	}
-	if !v.IsSet("temperature") {
-		c.Temperature = DefaultTemperature
-	}
 	return &c, nil
 }
 
@@ -167,7 +189,6 @@ func Save(c *Config) error {
 	v.Set("provider", c.Provider)
 	v.Set("providers", prov)
 	v.Set("model", c.Model)
-	v.Set("temperature", c.Temperature)
 	v.Set("telemetry_disable", c.TelemetryDisable)
 	return v.WriteConfigAs(path)
 }

@@ -39,10 +39,12 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 	return &cobra.Command{
 		Use:   "cmd [flags] <prompt>",
 		Short: "Convert natural language into shell commands",
-		Long: "cmd translates English instructions into shell commands using OpenAI." +
+		Long: "cmd translates English instructions into shell commands using AI." +
 			" Configuration is read from $HOME/.config/cmd/config.yaml or $CMD_CONFIG." +
-			" Fields:\n  api_key - OpenAI token (encrypted)\n  model - model name" +
-			" (default " + config.DefaultModel + ")\n  temperature - sampling temperature",
+			" Supports OpenAI, Anthropic, OpenRouter, Gemini, and Ollama providers." +
+			" Fields:\n  provider - AI provider (openai, anthropic, openrouter, gemini, ollama)" +
+			"\n  api_key - provider token (encrypted)\n  model - model name" +
+			"\n  temperature - sampling temperature",
 		Version:      Version,
 		Args:         cobra.ArbitraryArgs,
 		SilenceUsage: true,
@@ -93,6 +95,10 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 				return err
 			}
 			log.Debugf("selected: %s", choice)
+
+			// Display the command before executing
+			fmt.Fprintf(os.Stderr, "\n%s %s\n\n", ui.MutedStyle.Render("$"), ui.BoldStyle.Render(choice))
+
 			return run.Run(cmd.Context(), choice)
 		},
 	}
@@ -100,12 +106,11 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 
 var rootCmd *cobra.Command
 var (
-	cfg         *config.Config
-	model       string
-	temperature float32
-	client      llm.Client
-	track       telemetry.Tracker
-	debug       bool
+	cfg    *config.Config
+	model  string
+	client llm.Client
+	track  telemetry.Tracker
+	debug  bool
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -128,12 +133,10 @@ func init() {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
 	}
 	model = cfg.Model
-	temperature = cfg.Temperature
 
 	rootCmd = NewRootCmd(&client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
 	rootCmd.AddCommand(configCmd)
-	rootCmd.PersistentFlags().StringVar(&model, "model", model, "OpenAI model")
-	rootCmd.PersistentFlags().Float32Var(&temperature, "temperature", temperature, "sampling temperature")
+	rootCmd.PersistentFlags().StringVar(&model, "model", model, "AI model name")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose debug output")
 
 	rootCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
@@ -181,7 +184,7 @@ func init() {
 		}
 
 		var err error
-		client, err = llm.NewClient(cfg.Provider, p.APIKey, p.APIURL, model, temperature)
+		client, err = llm.NewClient(cfg.Provider, p.APIKey, p.APIURL, model)
 		if err != nil {
 			return err
 		}
@@ -198,7 +201,6 @@ func init() {
 		}
 
 		cfg.Model = model
-		cfg.Temperature = temperature
 		return config.Save(cfg)
 	}
 }
