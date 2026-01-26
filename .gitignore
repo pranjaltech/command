@@ -8,6 +8,11 @@
 *.so
 *.dylib
 
+# Built binaries
+/cmd
+/command
+cmd/command
+
 # Test binary, built with `go test -c`
 *.test
 

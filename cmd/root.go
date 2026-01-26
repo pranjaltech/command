@@ -134,6 +134,7 @@ func init() {
 	model = cfg.Model
 
 	rootCmd = NewRootCmd(&client, probe.NewProbe(), ui.NewSelector(), shell.NewRunner())
+	rootCmd.SetVersionTemplate(VersionInfo() + "\n")
 	rootCmd.AddCommand(configCmd)
 	rootCmd.PersistentFlags().StringVar(&model, "model", model, "AI model name")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose debug output")
