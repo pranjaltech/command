@@ -81,6 +81,41 @@ staticcheck ./...
 go vet ./...
 ```
 
+### Releases
+
+The project uses [GoReleaser](https://goreleaser.com/) to automate releases and Homebrew Cask updates.
+
+#### Creating a Release
+
+1. **Tag the release**:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+2. **GoReleaser builds automatically** (via GitHub Actions):
+   - Builds for darwin/linux/windows on amd64/arm64
+   - Injects version info via ldflags: Version, Commit, Date
+   - Creates GitHub release with binaries
+   - Updates Homebrew Cask in `pranjaltech/homebrew-tools`
+
+3. **Users install via Homebrew**:
+   ```bash
+   brew install --cask pranjaltech/tools/cmd
+   ```
+
+4. **Version info is preserved**:
+   ```bash
+   cmd --version
+   # Output:
+   # cmd version 0.2.0
+   # commit: a91cb5c
+   # built at: 2026-01-26T16:22:54Z
+   # go: go1.25.6
+   ```
+
+The GoReleaser configuration (`.goreleaser.yaml`) ensures consistent versioning across development builds (Makefile) and production releases (Homebrew).
+
 ### Contributing
 - Follow Go conventions (`go fmt` etc.).
 - Keep tests passing and add new ones for your changes.

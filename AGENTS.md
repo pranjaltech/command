@@ -107,7 +107,41 @@ flowchart TD\
 - Run go test -race and staticcheck in CI.
 - Golden files stored in testdata/. Regenerate via go test ./... -update.
 -----
-## <a name="x0701ab4f8caa69a491757eb1c163f0258f59701"></a>10. Continuous Verification Checklist (Codex must run before PR)
+## <a name="release-process"></a>10. Release Process
+
+The project uses **GoReleaser** for automated releases and Homebrew Cask distribution.
+
+### Version Management
+- **Semantic versioning**: `MAJOR.MINOR.PATCH` (e.g., `0.2.0`)
+- **Version injection**: Build-time ldflags inject `Version`, `Commit`, and `Date` into `cmd/version.go`
+- **Development builds**: Use `Makefile` which injects version info from git
+- **Production releases**: Use GoReleaser which injects version info from git tags
+
+### Creating a Release
+1. **Update version** in `Makefile` (line 2) and `cmd/version.go` (line 10)
+2. **Commit changes**: `git commit -am "Bump version to X.Y.Z"`
+3. **Tag the release**: `git tag vX.Y.Z && git push origin vX.Y.Z`
+4. **GoReleaser runs automatically** (GitHub Actions):
+   - Builds binaries for darwin/linux/windows on amd64/arm64
+   - Injects version metadata via ldflags
+   - Creates GitHub release with artifacts
+   - Updates Homebrew Cask in `pranjaltech/homebrew-tools`
+
+### Verification
+After release, verify Homebrew installation:
+```bash
+brew install --cask pranjaltech/tools/cmd
+cmd --version
+# Should show: cmd version X.Y.Z, commit hash, build date, Go version
+```
+
+### Configuration Files
+- **`.goreleaser.yaml`**: Defines build matrix, ldflags, and Homebrew Cask settings
+- **`Makefile`**: Local development builds with version injection
+- **`cmd/version.go`**: Version variables and `VersionInfo()` formatter
+
+-----
+## <a name="x0701ab4f8caa69a491757eb1c163f0258f59701"></a>11. Continuous Verification Checklist (Codex must run before PR)
 ./codex/setup.sh         *# ensure fresh env similar to agent*\
 golangci-lint run ./...\
 staticcheck ./...\
@@ -116,7 +150,7 @@ go vet ./...\
 go test -race -coverprofile=coverage.out ./...
 
 -----
-## <a name="pullrequest-template-autofilled-by-codex"></a>11. Pull‑Request Template (Autofilled by Codex)
+## <a name="pullrequest-template-autofilled-by-codex"></a>12. Pull‑Request Template (Autofilled by Codex)
 \### What & Why\
 \- \
 \### How\
@@ -132,28 +166,28 @@ $ golangci-lint run ./... && staticcheck ./... && go test -race ./...
 
 \---\
 \
-\## 12. Self‑Improvement Loop\
+\## 13. Self‑Improvement Loop\
 1\. \*\*Doc watch\*\* – Before using any external API or Go stdlib added after Go 1.22, fetch docs & adjust.\
 2\. \*\*Performance audit\*\* – On every 10th commit, run `go test -bench=.` and attach a benchmark diff if changes touch hot paths.\
 3\. \*\*Dep upgrades\*\* – Weekly: `go get -u ./...` then `go mod tidy` guarded by tests.\
 \
 \---\
 \
-\## 13. Security & Account Hygiene\
+\## 14. Security & Account Hygiene\
 \* Codex will \*never\* be given production credentials; tests should run in disposable containers.\
 \* Do not hard‑code API keys; use env vars & Vault/1Password when manual testing.\
 \* All contributors must have MFA enabled on GitHub.\
 \
 \---\
 \
-\## 14. Prompting Tips for Codex Tasks (repo‑specific)\
+\## 15. Prompting Tips for Codex Tasks (repo‑specific)\
 \* \*\*Start small\*\* – Ask Codex to scaffold a single command or write a failing test first.\
 \* \*\*Provide repro\*\* – Include sample env variables & expected terminal output.\
 \* \*\*Verify\*\* – End each task asking Codex to run `./scripts/ci\_local.sh` and report results.\
 \
 \---\
 \
-\## 15. Task‑File Workflow (Modus Operandi)\
+\## 16. Task‑File Workflow (Modus Operandi)\
 Codex and human contributors \*\*must\*\* manage feature or bug work through explicit \*task files\* to ensure traceability and incremental progress.\
 \
 1\. \*\*Create a task stub\*\*  \
