@@ -72,14 +72,22 @@ func runOnboarding() error {
 		}
 	}
 
-	if apiKey == "" {
+	// Ollama doesn't require an API key (local usage)
+	if apiKey == "" && sel.Key != "ollama" {
 		return fmt.Errorf("api key is required")
+	}
+
+	// Check for API URL environment variable
+	apiURL := sel.URL
+	if envURL := os.Getenv(sel.URLEnv); envURL != "" {
+		apiURL = envURL
+		fmt.Printf("Using API URL from %s: %s\n", sel.URLEnv, envURL)
 	}
 
 	// Save configuration
 	cfg := &config.Config{
 		Provider:         sel.Key,
-		Providers:        map[string]config.Provider{sel.Key: {APIKey: apiKey, APIURL: sel.URL}},
+		Providers:        map[string]config.Provider{sel.Key: {APIKey: apiKey, APIURL: apiURL}},
 		Model:            config.DefaultModelForProvider(sel.Key),
 		TelemetryDisable: true, // Default to disabled
 	}

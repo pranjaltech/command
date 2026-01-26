@@ -43,8 +43,7 @@ func NewRootCmd(client *llm.Client, collector envCollector, sel selector, run ru
 			" Configuration is read from $HOME/.config/cmd/config.yaml or $CMD_CONFIG." +
 			" Supports OpenAI, Anthropic, OpenRouter, Gemini, and Ollama providers." +
 			" Fields:\n  provider - AI provider (openai, anthropic, openrouter, gemini, ollama)" +
-			"\n  api_key - provider token (encrypted)\n  model - model name" +
-			"\n  temperature - sampling temperature",
+			"\n  api_key - provider token (encrypted)\n  model - model name",
 		Version:      Version,
 		Args:         cobra.ArbitraryArgs,
 		SilenceUsage: true,

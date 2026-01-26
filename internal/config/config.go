@@ -157,7 +157,12 @@ func Load() (*Config, error) {
 		c.APIKey = ""
 	}
 	if v.GetString("model") == "" {
-		c.Model = DefaultModel
+		// Use provider-specific default if provider is set
+		if c.Provider != "" {
+			c.Model = DefaultModelForProvider(c.Provider)
+		} else {
+			c.Model = DefaultModel
+		}
 	}
 	return &c, nil
 }

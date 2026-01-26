@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"command/internal/config"
@@ -138,10 +139,12 @@ func handleChangeProvider(cfg *config.Config) error {
 		cfg.Providers = make(map[string]config.Provider)
 	}
 
-	// Keep existing URL if switching back to a known provider
+	// Determine API URL: environment variable > existing config > default
 	existingProvider := cfg.Providers[sel.Key]
 	apiURL := sel.URL
-	if existingProvider.APIURL != "" {
+	if envURL := os.Getenv(sel.URLEnv); envURL != "" {
+		apiURL = envURL
+	} else if existingProvider.APIURL != "" {
 		apiURL = existingProvider.APIURL
 	}
 

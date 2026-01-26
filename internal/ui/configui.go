@@ -152,8 +152,9 @@ func (m ConfigUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case stepAPIKey:
 				// API key entered
 				key := strings.TrimSpace(m.apiInput.Value())
-				if key == "" {
-					// Don't allow empty key
+				// Ollama doesn't require an API key (local usage)
+				if key == "" && m.result.Provider != "ollama" {
+					// Don't allow empty key for non-local providers
 					return m, nil
 				}
 				m.result.APIKey = key
@@ -226,7 +227,12 @@ func (m ConfigUI) viewAPIKeyInput() string {
 		s.WriteString("\n\n")
 	}
 
-	s.WriteString("Enter your API key:\n")
+	// Show appropriate prompt based on provider
+	if m.result.Provider == "ollama" {
+		s.WriteString("Enter your API key " + MutedStyle.Render("(optional for local Ollama)") + ":\n")
+	} else {
+		s.WriteString("Enter your API key:\n")
+	}
 	s.WriteString("> " + m.apiInput.View())
 	s.WriteString("\n\n")
 	s.WriteString(MutedStyle.Render("[Enter] Confirm  [Esc] Back"))
