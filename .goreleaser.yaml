@@ -38,6 +38,22 @@ archives:
       - goos: windows
         formats: [zip]
 
+nfpms:
+  - id: cmd
+    package_name: cmd
+    file_name_template: "{{ .ConventionalFileName }}"
+    ids:
+      - cmd
+    vendor: pranjaltech
+    homepage: "https://github.com/pranjaltech/command"
+    maintainer: "pranjaltech"
+    description: "AI-assisted CLI that turns natural language into shell commands"
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+
 changelog:
   sort: asc
   filters:
