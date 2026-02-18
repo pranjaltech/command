@@ -17,7 +17,7 @@ curl -sSL https://raw.githubusercontent.com/pranjaltech/command/main/scripts/ins
 ```
 Downloads the latest pre-built binary and installs it to `/usr/local/bin`. Set `PREFIX` to change the location:
 ```bash
-PREFIX=$HOME/.local/bin curl -sSL https://raw.githubusercontent.com/pranjaltech/command/main/scripts/install-remote.sh | bash
+curl -sSL https://raw.githubusercontent.com/pranjaltech/command/main/scripts/install-remote.sh | PREFIX=$HOME/.local/bin bash
 ```
 
 **Debian / Ubuntu** — download the `.deb` from the [latest release](https://github.com/pranjaltech/command/releases/latest):
