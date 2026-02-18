@@ -46,7 +46,7 @@ nfpms:
       - cmd
     vendor: pranjaltech
     homepage: "https://github.com/pranjaltech/command"
-    maintainer: "Pranjal <hey@pranjal.com>"
+    maintainer: "Pranjal <hey@pranjal.io>"
     description: "AI-assisted CLI that turns natural language into shell commands"
     license: MIT
     formats:
