@@ -5,10 +5,37 @@ A command-line helper that turns English instructions into shell commands. It ga
 ## For Users
 
 ### Install
-- **Homebrew**: `brew install --cask pranjaltech/tools/cmd`
-- **Manual build**: run `scripts/install.sh` and it will place the binary under `/usr/local/bin`.
 
-The tool works on macOS and Linux with Go 1.22+ installed.
+**macOS (Homebrew)**:
+```bash
+brew install --cask pranjaltech/tools/cmd
+```
+
+**Linux / macOS (quick install)**:
+```bash
+curl -sSL https://raw.githubusercontent.com/pranjaltech/command/main/scripts/install-remote.sh | bash
+```
+Downloads the latest pre-built binary and installs it to `/usr/local/bin`. Set `PREFIX` to change the location:
+```bash
+curl -sSL https://raw.githubusercontent.com/pranjaltech/command/main/scripts/install-remote.sh | PREFIX=$HOME/.local/bin bash
+```
+
+**Debian / Ubuntu** — download the `.deb` from the [latest release](https://github.com/pranjaltech/command/releases/latest):
+```bash
+sudo dpkg -i cmd_*_amd64.deb
+```
+
+**Fedora / RHEL** — download the `.rpm` from the [latest release](https://github.com/pranjaltech/command/releases/latest):
+```bash
+sudo rpm -i cmd-*.x86_64.rpm
+```
+
+**Build from source** (requires Go 1.22+):
+```bash
+scripts/install.sh
+```
+
+The tool works on macOS and Linux. Pre-built binaries are available for both platforms.
 
 ### What can it do?
 - Translate natural language into runnable shell commands.
