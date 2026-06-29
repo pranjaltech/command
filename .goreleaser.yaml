@@ -73,9 +73,17 @@ homebrew_casks:
       email: actions@github.com
     commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     directory: Casks
+    # GoReleaser only writes the cask to dist/; the release workflow then runs
+    # `brew style --fix` on it before committing to the tap. This keeps the
+    # published cask in sync with Homebrew's rubocop (which tightened in 6.0.3)
+    # without relying on GoReleaser's template emitting canonical formatting.
+    # See scripts/publish-cask.sh and .github/workflows/release.yml.
+    skip_upload: "true"
     hooks:
       post:
+        # Use `.zero?` (Style/NumericPredicate) rather than `== 0` so the
+        # generated postflight block is already brew-style clean.
         install: |
-          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status.zero?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/cmd"]
           end

@@ -30,4 +30,15 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GoReleaser writes the cask to dist/ but does not push it (skip_upload).
+      # We style it with the same Homebrew/rubocop the tap CI uses, then publish.
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Homebrew cask
+        run: ./scripts/publish-cask.sh
+        env:
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
